@@ -109,3 +109,18 @@ XUNIT_RESULT*.xml
 
 # Vale
 .vale/styles/*
+
+# === Auto-generated build artifact ignores (2026-02-24) ===
+
+# Root-level build artifacts
+build/
+managed_components/
+
+# Config backups
+sdkconfig.old
+sdkconfig.defaults.backup
+
+# C/C++ object and dependency files
+*.o
+*.a
+*.d

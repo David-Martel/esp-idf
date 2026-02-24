@@ -1,0 +1,7 @@
+# === Ripgrep ignore - esp-idf (2026-02-24) ===
+# Skip heavy binary/build directories for faster searches
+build/
+managed_components/
+.git/
+docs/
+examples/
