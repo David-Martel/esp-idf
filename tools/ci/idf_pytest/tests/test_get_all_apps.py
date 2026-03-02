@@ -2,15 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 from pathlib import Path
 
-from idf_pytest.script import get_all_apps
-from idf_pytest.script import SUPPORTED_TARGETS
-
 from conftest import create_project
+from idf_pytest.script import SUPPORTED_TARGETS, get_all_apps
 
 
 def test_get_all_apps_non(work_dirpath: Path) -> None:
-    create_project('foo', work_dirpath)
-    create_project('bar', work_dirpath)
+    create_project("foo", work_dirpath)
+    create_project("bar", work_dirpath)
 
     test_related_apps, non_test_related_apps = get_all_apps([str(work_dirpath)])
 
@@ -19,8 +17,10 @@ def test_get_all_apps_non(work_dirpath: Path) -> None:
 
 
 def test_get_all_apps_single_dut_test_script(work_dirpath: Path) -> None:
-    create_project('foo', work_dirpath)
-    with open(work_dirpath / 'foo' / 'pytest_get_all_apps_single_dut_test_script.py', 'w') as fw:
+    create_project("foo", work_dirpath)
+    with open(
+        work_dirpath / "foo" / "pytest_get_all_apps_single_dut_test_script.py", "w"
+    ) as fw:
         fw.write(
             """import pytest
 
@@ -30,18 +30,24 @@ def test_foo(dut):
     pass
 """
         )
-    create_project('bar', work_dirpath)
+    create_project("bar", work_dirpath)
 
-    test_related_apps, non_test_related_apps = get_all_apps([str(work_dirpath)], target='all')
+    test_related_apps, non_test_related_apps = get_all_apps(
+        [str(work_dirpath)], target="all"
+    )
 
     assert len(test_related_apps) == 2
     assert len(non_test_related_apps) == 2 * len(SUPPORTED_TARGETS) - 2
 
 
 def test_get_all_apps_multi_dut_with_markers_test_script(work_dirpath: Path) -> None:
-    create_project('foo', work_dirpath)
+    create_project("foo", work_dirpath)
 
-    (work_dirpath / 'foo' / 'pytest_get_all_apps_multi_dut_with_markers_test_script.py').write_text(
+    (
+        work_dirpath
+        / "foo"
+        / "pytest_get_all_apps_multi_dut_with_markers_test_script.py"
+    ).write_text(
         """import pytest
 
 @pytest.mark.esp32
@@ -49,18 +55,22 @@ def test_get_all_apps_multi_dut_with_markers_test_script(work_dirpath: Path) -> 
 def test_foo(dut):
     pass
 """,
-        encoding='utf-8',
+        encoding="utf-8",
     )
 
-    test_related_apps, non_test_related_apps = get_all_apps([str(work_dirpath)], target='all')
+    test_related_apps, non_test_related_apps = get_all_apps(
+        [str(work_dirpath)], target="all"
+    )
 
     assert len(test_related_apps) == 1
     assert len(non_test_related_apps) == len(SUPPORTED_TARGETS) - 1
 
 
 def test_get_all_apps_multi_dut_test_script(work_dirpath: Path) -> None:
-    create_project('foo', work_dirpath)
-    with open(work_dirpath / 'foo' / 'pytest_get_all_apps_multi_dut_test_script.py', 'w') as fw:
+    create_project("foo", work_dirpath)
+    with open(
+        work_dirpath / "foo" / "pytest_get_all_apps_multi_dut_test_script.py", "w"
+    ) as fw:
         fw.write(
             """import pytest
 
@@ -75,28 +85,36 @@ def test_foo(dut):
 """
         )
 
-    test_related_apps, non_test_related_apps = get_all_apps([str(work_dirpath)], target='esp32s2,esp32s3')
+    test_related_apps, non_test_related_apps = get_all_apps(
+        [str(work_dirpath)], target="esp32s2,esp32s3"
+    )
     assert len(test_related_apps) == 2
     assert len(non_test_related_apps) == 0
 
-    test_related_apps, non_test_related_apps = get_all_apps([str(work_dirpath)], target='esp32,esp32s3,esp32')
+    test_related_apps, non_test_related_apps = get_all_apps(
+        [str(work_dirpath)], target="esp32,esp32s3,esp32"
+    )
     assert len(test_related_apps) == 2
     assert len(non_test_related_apps) == 0
 
-    test_related_apps, non_test_related_apps = get_all_apps([str(work_dirpath)], target='all')
+    test_related_apps, non_test_related_apps = get_all_apps(
+        [str(work_dirpath)], target="all"
+    )
     assert len(test_related_apps) == 3
     assert len(non_test_related_apps) == len(SUPPORTED_TARGETS) - 3
 
-    test_related_apps, non_test_related_apps = get_all_apps([str(work_dirpath)], target='foo,bar')
+    test_related_apps, non_test_related_apps = get_all_apps(
+        [str(work_dirpath)], target="foo,bar"
+    )
     assert len(test_related_apps) == 0
     assert len(non_test_related_apps) == 0
 
 
 def test_get_all_apps_modified_pytest_script(work_dirpath: Path) -> None:
-    create_project('foo', work_dirpath)
-    create_project('bar', work_dirpath)
+    create_project("foo", work_dirpath)
+    create_project("bar", work_dirpath)
 
-    (work_dirpath / 'pytest_get_all_apps_modified_pytest_script.py').write_text(
+    (work_dirpath / "pytest_get_all_apps_modified_pytest_script.py").write_text(
         """import pytest
 import os
 
@@ -108,23 +126,27 @@ import os
 def test_multi_foo_bar(dut):
     pass
 """,
-        encoding='utf-8',
+        encoding="utf-8",
     )
 
-    test_related_apps, non_test_related_apps = get_all_apps([str(work_dirpath)], target='all')
+    test_related_apps, non_test_related_apps = get_all_apps(
+        [str(work_dirpath)], target="all"
+    )
     assert len(test_related_apps) == 2  # foo-esp32, bar-esp32
     assert len(non_test_related_apps) == 2 * len(SUPPORTED_TARGETS) - 2
 
     test_related_apps, non_test_related_apps = get_all_apps(
-        [str(work_dirpath)], target='all', modified_files=[], modified_components=[]
+        [str(work_dirpath)], target="all", modified_files=[], modified_components=[]
     )
     assert len(test_related_apps) == 0
     assert len(non_test_related_apps) == 0
 
     test_related_apps, non_test_related_apps = get_all_apps(
         [str(work_dirpath)],
-        target='all',
-        modified_files=[str(work_dirpath / 'pytest_get_all_apps_modified_pytest_script.py')],
+        target="all",
+        modified_files=[
+            str(work_dirpath / "pytest_get_all_apps_modified_pytest_script.py")
+        ],
         modified_components=[],
     )
     assert len(test_related_apps) == 2

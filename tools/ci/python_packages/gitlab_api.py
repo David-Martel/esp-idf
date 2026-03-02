@@ -10,12 +10,7 @@ import tempfile
 import time
 import zipfile
 from functools import wraps
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import gitlab
 
@@ -31,7 +26,7 @@ def retry(func: TR) -> TR:
     """
 
     @wraps(func)
-    def wrapper(self: 'Gitlab', *args: Any, **kwargs: Any) -> Any:
+    def wrapper(self: "Gitlab", *args: Any, **kwargs: Any) -> Any:
         retried = 0
         while True:
             try:
@@ -41,9 +36,11 @@ def retry(func: TR) -> TR:
                     if e.response_code == 500:
                         # retry on this error
                         pass
-                    elif e.response_code == 404 and os.environ.get('LOCAL_GITLAB_HTTPS_HOST', None):
+                    elif e.response_code == 404 and os.environ.get(
+                        "LOCAL_GITLAB_HTTPS_HOST", None
+                    ):
                         # remove the environment variable "LOCAL_GITLAB_HTTPS_HOST" and retry
-                        os.environ.pop('LOCAL_GITLAB_HTTPS_HOST', None)
+                        os.environ.pop("LOCAL_GITLAB_HTTPS_HOST", None)
                     else:
                         # other GitlabErrors aren't retried
                         raise e
@@ -52,9 +49,11 @@ def retry(func: TR) -> TR:
                     raise e  # get out of the loop
                 else:
                     logging.warning(
-                        'Network failure in {}, retrying ({})'.format(getattr(func, '__name__', '(unknown callable)'),
-                                                                      retried))
-                    time.sleep(2 ** retried)  # wait a bit more after each retry
+                        "Network failure in {}, retrying ({})".format(
+                            getattr(func, "__name__", "(unknown callable)"), retried
+                        )
+                    )
+                    time.sleep(2**retried)  # wait a bit more after each retry
                     continue
             else:
                 break
@@ -64,16 +63,16 @@ def retry(func: TR) -> TR:
 
 
 class Gitlab(object):
-    JOB_NAME_PATTERN = re.compile(r'(\w+)(\s+(\d+)/(\d+))?')
+    JOB_NAME_PATTERN = re.compile(r"(\w+)(\s+(\d+)/(\d+))?")
 
     DOWNLOAD_ERROR_MAX_RETRIES = 3
-    DEFAULT_BUILD_CHILD_PIPELINE_NAME = 'Build Child Pipeline'
+    DEFAULT_BUILD_CHILD_PIPELINE_NAME = "Build Child Pipeline"
 
     def __init__(self, project_id: Union[int, str, None] = None):
-        config_data_from_env = os.getenv('PYTHON_GITLAB_CONFIG')
+        config_data_from_env = os.getenv("PYTHON_GITLAB_CONFIG")
         if config_data_from_env:
             # prefer to load config from env variable
-            with tempfile.NamedTemporaryFile('w', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile("w", delete=False) as temp_file:
                 temp_file.write(config_data_from_env)
             config_files = [temp_file.name]  # type: Optional[List[str]]
         else:
@@ -82,9 +81,15 @@ class Gitlab(object):
         self._init_gitlab_inst(project_id, config_files)
 
     @retry
-    def _init_gitlab_inst(self, project_id: Optional[int], config_files: Optional[List[str]]) -> None:
-        gitlab_id = os.getenv('LOCAL_GITLAB_HTTPS_HOST')  # if None, will use the default gitlab server
-        self.gitlab_inst = gitlab.Gitlab.from_config(gitlab_id=gitlab_id, config_files=config_files)
+    def _init_gitlab_inst(
+        self, project_id: Optional[int], config_files: Optional[List[str]]
+    ) -> None:
+        gitlab_id = os.getenv(
+            "LOCAL_GITLAB_HTTPS_HOST"
+        )  # if None, will use the default gitlab server
+        self.gitlab_inst = gitlab.Gitlab.from_config(
+            gitlab_id=gitlab_id, config_files=config_files
+        )
 
         try:
             self.gitlab_inst.auth()
@@ -125,7 +130,7 @@ class Gitlab(object):
                     res.append(project.id)
                     break
 
-            if project.namespace['path'] == namespace:
+            if project.namespace["path"] == namespace:
                 if project.name == name:
                     res.insert(0, project.id)
                 else:
@@ -148,11 +153,13 @@ class Gitlab(object):
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             job.artifacts(streamed=True, action=temp_file.write)
 
-        with zipfile.ZipFile(temp_file.name, 'r') as archive_file:
+        with zipfile.ZipFile(temp_file.name, "r") as archive_file:
             archive_file.extractall(destination)
 
     @retry
-    def download_artifact(self, job_id: int, artifact_path: List[str], destination: Optional[str] = None) -> List[bytes]:
+    def download_artifact(
+        self, job_id: int, artifact_path: List[str], destination: Optional[str] = None
+    ) -> List[bytes]:
         """
         download specific path of job artifacts and extract to destination.
 
@@ -169,7 +176,9 @@ class Gitlab(object):
             try:
                 data = job.artifact(a_path)  # type: bytes
             except gitlab.GitlabGetError as e:
-                logging.error("Failed to download '{}' from job {}".format(a_path, job_id))
+                logging.error(
+                    "Failed to download '{}' from job {}".format(a_path, job_id)
+                )
                 raise e
             raw_data_list.append(data)
             if destination:
@@ -179,13 +188,18 @@ class Gitlab(object):
                 except OSError:
                     # already exists
                     pass
-                with open(file_path, 'wb') as f:
+                with open(file_path, "wb") as f:
                     f.write(data)
 
         return raw_data_list
 
     @retry
-    def find_job_id(self, job_name: str, pipeline_id: Optional[str] = None, job_status: str = 'success') -> List[Dict]:
+    def find_job_id(
+        self,
+        job_name: str,
+        pipeline_id: Optional[str] = None,
+        job_status: str = "success",
+    ) -> List[Dict]:
         """
         Get Job ID from job name of specific pipeline
 
@@ -197,19 +211,24 @@ class Gitlab(object):
         """
         job_id_list = []
         if pipeline_id is None:
-            pipeline_id = os.getenv('CI_PIPELINE_ID')
+            pipeline_id = os.getenv("CI_PIPELINE_ID")
         pipeline = self.project.pipelines.get(pipeline_id)
         jobs = pipeline.jobs.list(all=True)
         for job in jobs:
             match = self.JOB_NAME_PATTERN.match(job.name)
             if match:
                 if match.group(1) == job_name and job.status == job_status:
-                    job_id_list.append({'id': job.id, 'parallel_num': match.group(3)})
+                    job_id_list.append({"id": job.id, "parallel_num": match.group(3)})
         return job_id_list
 
     @retry
-    def download_archive(self, ref: str, destination: str, project_id: Optional[int] = None,
-                         cache_dir: Optional[str] = None) -> str:
+    def download_archive(
+        self,
+        ref: str,
+        destination: str,
+        project_id: Optional[int] = None,
+        cache_dir: Optional[str] = None,
+    ) -> str:
         """
         Download archive of certain commit of a repository and extract to destination path
 
@@ -224,31 +243,44 @@ class Gitlab(object):
             project = self.gitlab_inst.projects.get(project_id)
 
         if cache_dir:
-            local_archive_file = os.path.join(cache_dir, f'{ref}.tar.gz')
+            local_archive_file = os.path.join(cache_dir, f"{ref}.tar.gz")
             os.makedirs(os.path.dirname(local_archive_file), exist_ok=True)
             if os.path.isfile(local_archive_file):
-                logging.info('Use cached archive file. Skipping download...')
+                logging.info("Use cached archive file. Skipping download...")
             else:
-                with open(local_archive_file, 'wb') as fw:
+                with open(local_archive_file, "wb") as fw:
                     try:
-                        project.repository_archive(sha=ref, streamed=True, action=fw.write)
+                        project.repository_archive(
+                            sha=ref, streamed=True, action=fw.write
+                        )
                     except gitlab.GitlabGetError as e:
-                        logging.error('Failed to archive from project {}'.format(project_id))
+                        logging.error(
+                            "Failed to archive from project {}".format(project_id)
+                        )
                         raise e
-                logging.info('Downloaded archive size: {:.03f}MB'.format(
-                    float(os.path.getsize(local_archive_file)) / (1024 * 1024)))
+                logging.info(
+                    "Downloaded archive size: {:.03f}MB".format(
+                        float(os.path.getsize(local_archive_file)) / (1024 * 1024)
+                    )
+                )
 
             return self.decompress_archive(local_archive_file, destination)
 
         # no cache
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             try:
-                project.repository_archive(sha=ref, streamed=True, action=temp_file.write)
+                project.repository_archive(
+                    sha=ref, streamed=True, action=temp_file.write
+                )
             except gitlab.GitlabGetError as e:
-                logging.error('Failed to archive from project {}'.format(project_id))
+                logging.error("Failed to archive from project {}".format(project_id))
                 raise e
 
-        logging.info('Downloaded archive size: {:.03f}MB'.format(float(os.path.getsize(temp_file.name)) / (1024 * 1024)))
+        logging.info(
+            "Downloaded archive size: {:.03f}MB".format(
+                float(os.path.getsize(temp_file.name)) / (1024 * 1024)
+            )
+        )
 
         return self.decompress_archive(temp_file.name, destination)
 
@@ -257,15 +289,15 @@ class Gitlab(object):
         full_destination = os.path.abspath(destination)
         # By default max path length is set to 260 characters
         # Prefix `\\?\` extends it to 32,767 characters
-        if sys.platform == 'win32':
-            full_destination = '\\\\?\\' + full_destination
+        if sys.platform == "win32":
+            full_destination = "\\\\?\\" + full_destination
 
         try:
-            with tarfile.open(path, 'r') as archive_file:
+            with tarfile.open(path, "r") as archive_file:
                 root_name = archive_file.getnames()[0]
                 archive_file.extractall(full_destination)
         except tarfile.TarError as e:
-            logging.error(f'Error while decompressing archive {path}')
+            logging.error(f"Error while decompressing archive {path}")
             raise e
 
         return os.path.join(os.path.realpath(destination), root_name)
@@ -278,7 +310,7 @@ class Gitlab(object):
         :return: comma-separated tags of the job
         """
         job = self.project.jobs.get(job_id)
-        return ','.join(job.tag_list)
+        return ",".join(job.tag_list)
 
     def get_downstream_pipeline_ids(self, main_pipeline_id: int) -> List[int]:
         """
@@ -290,12 +322,14 @@ class Gitlab(object):
         bridge_pipeline_ids = []
         child_pipeline_ids = []
 
-        main_pipeline_bridges = self.project.pipelines.get(main_pipeline_id).bridges.list()
+        main_pipeline_bridges = self.project.pipelines.get(
+            main_pipeline_id
+        ).bridges.list()
         for bridge in main_pipeline_bridges:
-            downstream_pipeline = bridge.attributes.get('downstream_pipeline')
+            downstream_pipeline = bridge.attributes.get("downstream_pipeline")
             if not downstream_pipeline:
                 continue
-            bridge_pipeline_ids.append(downstream_pipeline['id'])
+            bridge_pipeline_ids.append(downstream_pipeline["id"])
 
         for bridge_pipeline_id in bridge_pipeline_ids:
             child_pipeline_ids.append(bridge_pipeline_id)
@@ -306,14 +340,18 @@ class Gitlab(object):
 
             child_bridges = bridge_pipeline.bridges.list()
             for child_bridge in child_bridges:
-                downstream_child_pipeline = child_bridge.attributes.get('downstream_pipeline')
+                downstream_child_pipeline = child_bridge.attributes.get(
+                    "downstream_pipeline"
+                )
                 if not downstream_child_pipeline:
                     continue
-                child_pipeline_ids.append(downstream_child_pipeline.get('id'))
+                child_pipeline_ids.append(downstream_child_pipeline.get("id"))
 
         return [pid for pid in child_pipeline_ids if pid is not None]
 
-    def retry_failed_jobs(self, pipeline_id: int, retry_allowed_failures: bool = False) -> List[int]:
+    def retry_failed_jobs(
+        self, pipeline_id: int, retry_allowed_failures: bool = False
+    ) -> List[int]:
         """
         Retry failed jobs for a specific pipeline. Optionally include jobs marked as 'allowed failures'.
 
@@ -322,62 +360,67 @@ class Gitlab(object):
         """
         jobs_succeeded_retry = []
         pipeline_ids = [pipeline_id] + self.get_downstream_pipeline_ids(pipeline_id)
-        logging.info(f'Retrying jobs for pipelines: {pipeline_ids}')
+        logging.info(f"Retrying jobs for pipelines: {pipeline_ids}")
         for pid in pipeline_ids:
             pipeline = self.project.pipelines.get(pid)
             job_ids_to_retry = [
                 job.id
-                for job in pipeline.jobs.list(scope='failed')
-                if retry_allowed_failures or not job.attributes.get('allow_failure', False)
+                for job in pipeline.jobs.list(scope="failed")
+                if retry_allowed_failures
+                or not job.attributes.get("allow_failure", False)
             ]
-            logging.info(f'Failed jobs for pipeline {pid}: {job_ids_to_retry}')
+            logging.info(f"Failed jobs for pipeline {pid}: {job_ids_to_retry}")
             for job_id in job_ids_to_retry:
                 try:
                     res = self.project.jobs.get(job_id).retry()
                     jobs_succeeded_retry.append(job_id)
-                    logging.info(f'Retried job {job_id} with result {res}')
+                    logging.info(f"Retried job {job_id} with result {res}")
                 except Exception as e:
-                    logging.error(f'Failed to retry job {job_id}: {str(e)}')
+                    logging.error(f"Failed to retry job {job_id}: {str(e)}")
 
         return jobs_succeeded_retry
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument('action')
-    parser.add_argument('project_id', type=int)
-    parser.add_argument('--pipeline_id', '-i', type=int, default=None)
-    parser.add_argument('--ref', '-r', default='master')
-    parser.add_argument('--job_id', '-j', type=int, default=None)
-    parser.add_argument('--job_name', '-n', default=None)
-    parser.add_argument('--project_name', '-m', default=None)
-    parser.add_argument('--destination', '-d', default=None)
-    parser.add_argument('--artifact_path', '-a', nargs='*', default=None)
+    parser.add_argument("action")
+    parser.add_argument("project_id", type=int)
+    parser.add_argument("--pipeline_id", "-i", type=int, default=None)
+    parser.add_argument("--ref", "-r", default="master")
+    parser.add_argument("--job_id", "-j", type=int, default=None)
+    parser.add_argument("--job_name", "-n", default=None)
+    parser.add_argument("--project_name", "-m", default=None)
+    parser.add_argument("--destination", "-d", default=None)
+    parser.add_argument("--artifact_path", "-a", nargs="*", default=None)
     parser.add_argument(
-        '--retry-allowed-failures', action='store_true', help='Flag to retry jobs marked as allowed failures'
+        "--retry-allowed-failures",
+        action="store_true",
+        help="Flag to retry jobs marked as allowed failures",
     )
     args = parser.parse_args()
 
     gitlab_inst = Gitlab(args.project_id)
-    if args.action == 'download_artifacts':
+    if args.action == "download_artifacts":
         gitlab_inst.download_artifacts(args.job_id, args.destination)
-    if args.action == 'download_artifact':
+    if args.action == "download_artifact":
         gitlab_inst.download_artifact(args.job_id, args.artifact_path, args.destination)
-    elif args.action == 'find_job_id':
+    elif args.action == "find_job_id":
         job_ids = gitlab_inst.find_job_id(args.job_name, args.pipeline_id)
-        print(';'.join([','.join([str(j['id']), j['parallel_num']]) for j in job_ids]))
-    elif args.action == 'download_archive':
+        print(";".join([",".join([str(j["id"]), j["parallel_num"]]) for j in job_ids]))
+    elif args.action == "download_archive":
         gitlab_inst.download_archive(args.ref, args.destination)
-    elif args.action == 'get_project_id':
+    elif args.action == "get_project_id":
         ret = gitlab_inst.get_project_id(args.project_name)
-        print('project id: {}'.format(ret))
-    elif args.action == 'retry_failed_jobs':
-        res = gitlab_inst.retry_failed_jobs(args.pipeline_id, args.retry_allowed_failures)
-        print('jobs retried successfully: {}'.format(res))
-    elif args.action == 'get_job_tags':
+        print("project id: {}".format(ret))
+    elif args.action == "retry_failed_jobs":
+        res = gitlab_inst.retry_failed_jobs(
+            args.pipeline_id, args.retry_allowed_failures
+        )
+        print("jobs retried successfully: {}".format(res))
+    elif args.action == "get_job_tags":
         ret = gitlab_inst.get_job_tags(args.job_id)
         print(ret)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

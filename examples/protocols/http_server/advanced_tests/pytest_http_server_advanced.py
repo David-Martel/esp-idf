@@ -14,7 +14,18 @@ import pytest
 try:
     from idf_http_server_test import test as client
 except ModuleNotFoundError:
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'tools', 'ci', 'python_packages'))
+    sys.path.append(
+        os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "..",
+            "..",
+            "tools",
+            "ci",
+            "python_packages",
+        )
+    )
     from idf_http_server_test import test as client
 
 from common_test_methods import get_env_config_variable
@@ -37,47 +48,53 @@ from pytest_embedded import Dut
 @pytest.mark.esp32s3
 @pytest.mark.wifi_router
 def test_examples_protocol_http_server_advanced(dut: Dut) -> None:
-
     # Get binary file
-    binary_file = os.path.join(dut.app.binary_path, 'tests.bin')
+    binary_file = os.path.join(dut.app.binary_path, "tests.bin")
     bin_size = os.path.getsize(binary_file)
-    logging.info('http_server_bin_size : {}KB'.format(bin_size // 1024))
+    logging.info("http_server_bin_size : {}KB".format(bin_size // 1024))
 
-    logging.info('Starting http_server advanced test app')
+    logging.info("Starting http_server advanced test app")
 
     # Parse IP address of STA
-    logging.info('Waiting to connect with AP')
-    if dut.app.sdkconfig.get('EXAMPLE_WIFI_SSID_PWD_FROM_STDIN') is True:
-        dut.expect('Please input ssid password:')
-        env_name = 'wifi_router'
-        ap_ssid = get_env_config_variable(env_name, 'ap_ssid')
-        ap_password = get_env_config_variable(env_name, 'ap_password')
-        dut.write(f'{ap_ssid} {ap_password}')
-    got_ip = dut.expect(r'IPv4 address: (\d+\.\d+\.\d+\.\d+)[^\d]', timeout=30)[1].decode()
+    logging.info("Waiting to connect with AP")
+    if dut.app.sdkconfig.get("EXAMPLE_WIFI_SSID_PWD_FROM_STDIN") is True:
+        dut.expect("Please input ssid password:")
+        env_name = "wifi_router"
+        ap_ssid = get_env_config_variable(env_name, "ap_ssid")
+        ap_password = get_env_config_variable(env_name, "ap_password")
+        dut.write(f"{ap_ssid} {ap_password}")
+    got_ip = dut.expect(r"IPv4 address: (\d+\.\d+\.\d+\.\d+)[^\d]", timeout=30)[
+        1
+    ].decode()
 
-    got_port = dut.expect(r"(?:[\s\S]*)Started HTTP server on port: '(\d+)'", timeout=30)[1].decode()
+    got_port = dut.expect(
+        r"(?:[\s\S]*)Started HTTP server on port: '(\d+)'", timeout=30
+    )[1].decode()
 
-    result = dut.expect(r"(?:[\s\S]*)Max URI handlers: '(\d+)'(?:[\s\S]*)Max Open Sessions: "  # noqa: W605
-                        r"'(\d+)'(?:[\s\S]*)Max Header Length: '(\d+)'(?:[\s\S]*)Max URI Length: "
-                        r"'(\d+)'(?:[\s\S]*)Max Stack Size: '(\d+)'", timeout=15)
+    result = dut.expect(
+        r"(?:[\s\S]*)Max URI handlers: '(\d+)'(?:[\s\S]*)Max Open Sessions: "  # noqa: W605
+        r"'(\d+)'(?:[\s\S]*)Max Header Length: '(\d+)'(?:[\s\S]*)Max URI Length: "
+        r"'(\d+)'(?:[\s\S]*)Max Stack Size: '(\d+)'",
+        timeout=15,
+    )
     # max_uri_handlers = int(result[1])
     max_sessions = int(result[2])
     max_hdr_len = int(result[3])
     max_uri_len = int(result[4])
     max_stack_size = int(result[5])
 
-    logging.info('Got Port : {}'.format(got_port))
-    logging.info('Got IP   : {}'.format(got_ip))
+    logging.info("Got Port : {}".format(got_port))
+    logging.info("Got IP   : {}".format(got_ip))
 
     # Run test script
     # If failed raise appropriate exception
     failed = False
 
-    logging.info('Sessions and Context Tests...')
+    logging.info("Sessions and Context Tests...")
     if not client.spillover_session(got_ip, got_port, max_sessions):
-        logging.info('Ignoring failure')
+        logging.info("Ignoring failure")
     if not client.parallel_sessions_adder(got_ip, got_port, max_sessions):
-        logging.info('Ignoring failure')
+        logging.info("Ignoring failure")
     if not client.leftover_data_test(got_ip, got_port):
         failed = True
     if not client.async_response_test(got_ip, got_port):
@@ -92,17 +109,19 @@ def test_examples_protocol_http_server_advanced(dut: Dut) -> None:
     # if not client.packet_size_limit_test(got_ip, got_port, test_size):
     #    logging.info("Ignoring failure")
 
-    logging.info('Getting initial stack usage...')
+    logging.info("Getting initial stack usage...")
     if not client.get_hello(got_ip, got_port):
         failed = True
 
-    inital_stack = int(dut.expect(r"(?:[\s\S]*)Free Stack for server task: '(\d+)'", timeout=15)[1])
+    inital_stack = int(
+        dut.expect(r"(?:[\s\S]*)Free Stack for server task: '(\d+)'", timeout=15)[1]
+    )
 
     if inital_stack < 0.1 * max_stack_size:
-        logging.info('More than 90% of stack being used on server start')
+        logging.info("More than 90% of stack being used on server start")
         failed = True
 
-    logging.info('Basic HTTP Client Tests...')
+    logging.info("Basic HTTP Client Tests...")
     if not client.get_hello(got_ip, got_port):
         failed = True
     if not client.post_hello(got_ip, got_port):
@@ -124,7 +143,7 @@ def test_examples_protocol_http_server_advanced(dut: Dut) -> None:
     if not client.get_test_headers(got_ip, got_port):
         failed = True
 
-    logging.info('Error code tests...')
+    logging.info("Error code tests...")
     if not client.code_500_server_error_test(got_ip, got_port):
         failed = True
     if not client.code_501_method_not_impl(got_ip, got_port):
@@ -140,20 +159,22 @@ def test_examples_protocol_http_server_advanced(dut: Dut) -> None:
     if not client.code_408_req_timeout(got_ip, got_port):
         failed = True
     if not client.code_414_uri_too_long(got_ip, got_port, max_uri_len):
-        logging.info('Ignoring failure')
+        logging.info("Ignoring failure")
     if not client.code_431_hdr_too_long(got_ip, got_port, max_hdr_len):
-        logging.info('Ignoring failure')
+        logging.info("Ignoring failure")
     if not client.test_upgrade_not_supported(got_ip, got_port):
         failed = True
 
-    logging.info('Getting final stack usage...')
+    logging.info("Getting final stack usage...")
     if not client.get_hello(got_ip, got_port):
         failed = True
 
-    final_stack = int(dut.expect(r"(?:[\s\S]*)Free Stack for server task: '(\d+)'", timeout=15)[1])
+    final_stack = int(
+        dut.expect(r"(?:[\s\S]*)Free Stack for server task: '(\d+)'", timeout=15)[1]
+    )
 
     if final_stack < 0.05 * max_stack_size:
-        logging.info('More than 95% of stack got used during tests')
+        logging.info("More than 95% of stack got used during tests")
         failed = True
 
     if failed:

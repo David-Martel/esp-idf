@@ -7,8 +7,7 @@
 import abc
 
 
-class Transport():
-
+class Transport:
     @abc.abstractmethod
     def send_session_data(self, data):
         pass

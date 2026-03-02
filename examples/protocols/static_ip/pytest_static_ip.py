@@ -6,10 +6,12 @@ from pytest_embedded import Dut
 
 @pytest.mark.esp32
 @pytest.mark.eth_ip101
-@pytest.mark.parametrize('config', [
-    'default_ip101',
-], indirect=True)
-def test_static_ip(
-    dut: Dut
-) -> None:
-    dut.expect(r'Resolved IPv4 address: (\d+\.\d+\.\d+\.\d+)')
+@pytest.mark.parametrize(
+    "config",
+    [
+        "default_ip101",
+    ],
+    indirect=True,
+)
+def test_static_ip(dut: Dut) -> None:
+    dut.expect(r"Resolved IPv4 address: (\d+\.\d+\.\d+\.\d+)")

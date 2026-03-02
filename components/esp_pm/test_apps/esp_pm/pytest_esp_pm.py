@@ -6,13 +6,19 @@ from pytest_embedded import Dut
 
 @pytest.mark.generic
 @pytest.mark.supported_targets
-@pytest.mark.temp_skip_ci(targets=['esp32c61'], reason='not supported yet')  # TODO: [ESP32C61] IDF-9250 IDF-10985
-@pytest.mark.parametrize('config', [
-    'default',
-    'slp_iram_opt',
-    'limits',
-    'options',
-], indirect=True)
+@pytest.mark.temp_skip_ci(
+    targets=["esp32c61"], reason="not supported yet"
+)  # TODO: [ESP32C61] IDF-9250 IDF-10985
+@pytest.mark.parametrize(
+    "config",
+    [
+        "default",
+        "slp_iram_opt",
+        "limits",
+        "options",
+    ],
+    indirect=True,
+)
 def test_esp_pm(dut: Dut) -> None:
     dut.run_all_single_board_cases()
 
@@ -21,10 +27,8 @@ def test_esp_pm(dut: Dut) -> None:
 @pytest.mark.esp32s2
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
-    [
-        'pm_xip_psram_esp32s2'
-    ],
+    "config",
+    ["pm_xip_psram_esp32s2"],
     indirect=True,
 )
 def test_esp_attr_xip_psram_esp32s2(dut: Dut) -> None:
@@ -35,10 +39,8 @@ def test_esp_attr_xip_psram_esp32s2(dut: Dut) -> None:
 @pytest.mark.esp32s3
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
-    [
-        'pm_xip_psram_esp32s3'
-    ],
+    "config",
+    ["pm_xip_psram_esp32s3"],
     indirect=True,
 )
 def test_esp_attr_xip_psram_esp32s3(dut: Dut) -> None:
@@ -52,10 +54,8 @@ def test_esp_attr_xip_psram_esp32s3(dut: Dut) -> None:
 @pytest.mark.esp32p4
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
-    [
-        'pm_pd_top_sleep'
-    ],
+    "config",
+    ["pm_pd_top_sleep"],
 )
 def test_esp_pd_top_and_cpu_sleep(dut: Dut) -> None:
     dut.run_all_single_board_cases()

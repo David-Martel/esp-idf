@@ -8,7 +8,9 @@ from pytest_embedded import Dut
 @pytest.mark.esp32s3
 @pytest.mark.generic
 def test_touch_element_waterproof(dut: Dut) -> None:
-    dut.expect_exact('Touch Element Waterproof Example: Touch Element library install')
-    dut.expect_exact('Touch Element Waterproof Example: Touch Element waterproof install')
-    dut.expect_exact('Touch Element Waterproof Example: Touch button install')
-    dut.expect_exact('Touch Element Waterproof Example: Touch buttons create')
+    dut.expect_exact("Touch Element Waterproof Example: Touch Element library install")
+    dut.expect_exact(
+        "Touch Element Waterproof Example: Touch Element waterproof install"
+    )
+    dut.expect_exact("Touch Element Waterproof Example: Touch button install")
+    dut.expect_exact("Touch Element Waterproof Example: Touch buttons create")

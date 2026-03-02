@@ -3,6 +3,7 @@
 """
 This file is used in CI generate binary files for different kinds of apps
 """
+
 import argparse
 import os
 import sys
@@ -12,23 +13,24 @@ from pathlib import Path
 
 import yaml
 from dynamic_pipelines.constants import DEFAULT_TEST_PATHS
-from idf_build_apps import build_apps
-from idf_build_apps import setup_logging
+from idf_build_apps import build_apps, setup_logging
 from idf_build_apps.utils import semicolon_separated_str_to_list
-from idf_pytest.constants import DEFAULT_BUILD_TEST_RULES_FILEPATH
-from idf_pytest.constants import DEFAULT_CONFIG_RULES_STR
-from idf_pytest.constants import DEFAULT_FULL_BUILD_TEST_COMPONENTS
-from idf_pytest.constants import DEFAULT_FULL_BUILD_TEST_FILEPATTERNS
-from idf_pytest.constants import DEFAULT_IGNORE_WARNING_FILEPATH
+from idf_pytest.constants import (
+    DEFAULT_BUILD_TEST_RULES_FILEPATH,
+    DEFAULT_CONFIG_RULES_STR,
+    DEFAULT_FULL_BUILD_TEST_COMPONENTS,
+    DEFAULT_FULL_BUILD_TEST_FILEPATTERNS,
+    DEFAULT_IGNORE_WARNING_FILEPATH,
+)
 from idf_pytest.script import get_all_apps
 
 CI_ENV_VARS = {
-    'EXTRA_CFLAGS': '-Werror -Werror=deprecated-declarations -Werror=unused-variable '
-    '-Werror=unused-but-set-variable -Werror=unused-function -Wstrict-prototypes',
-    'EXTRA_CXXFLAGS': '-Werror -Werror=deprecated-declarations -Werror=unused-variable '
-    '-Werror=unused-but-set-variable -Werror=unused-function',
-    'LDGEN_CHECK_MAPPING': '1',
-    'IDF_CI_BUILD': '1',
+    "EXTRA_CFLAGS": "-Werror -Werror=deprecated-declarations -Werror=unused-variable "
+    "-Werror=unused-but-set-variable -Werror=unused-function -Wstrict-prototypes",
+    "EXTRA_CXXFLAGS": "-Werror -Werror=deprecated-declarations -Werror=unused-variable "
+    "-Werror=unused-but-set-variable -Werror=unused-function",
+    "LDGEN_CHECK_MAPPING": "1",
+    "IDF_CI_BUILD": "1",
 }
 
 
@@ -39,7 +41,9 @@ def main(args: argparse.Namespace) -> None:
             configs = yaml.safe_load(fr)
 
         if configs:
-            extra_default_build_targets = configs.get('extra_default_build_targets') or []
+            extra_default_build_targets = (
+                configs.get("extra_default_build_targets") or []
+            )
 
     test_related_apps, non_test_related_apps = get_all_apps(
         args.paths,
@@ -67,7 +71,10 @@ def main(args: argparse.Namespace) -> None:
             for extra_preserve_dir in args.extra_preserve_dirs:
                 abs_extra_preserve_dir = Path(extra_preserve_dir).resolve()
                 abs_app_dir = Path(app.app_dir).resolve()
-                if abs_extra_preserve_dir == abs_app_dir or abs_extra_preserve_dir in abs_app_dir.parents:
+                if (
+                    abs_extra_preserve_dir == abs_app_dir
+                    or abs_extra_preserve_dir in abs_app_dir.parents
+                ):
                     app.preserve = True
 
     res = build_apps(
@@ -77,7 +84,7 @@ def main(args: argparse.Namespace) -> None:
         dry_run=False,
         build_verbose=args.build_verbose,
         keep_going=True,
-        collect_size_info='size_info.txt',
+        collect_size_info="size_info.txt",
         collect_app_info=args.collect_app_info,
         ignore_warning_strs=args.ignore_warning_str,
         ignore_warning_file=args.ignore_warning_file,
@@ -92,157 +99,159 @@ def main(args: argparse.Namespace) -> None:
     sys.exit(res)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Build all the apps for different test types. Will auto remove those non-test apps binaries',
+        description="Build all the apps for different test types. Will auto remove those non-test apps binaries",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument('paths', nargs='*', help='Paths to the apps to build.')
+    parser.add_argument("paths", nargs="*", help="Paths to the apps to build.")
     parser.add_argument(
-        '-t',
-        '--target',
-        default='all',
-        help='Build apps for given target',
+        "-t",
+        "--target",
+        default="all",
+        help="Build apps for given target",
     )
     parser.add_argument(
-        '--config',
+        "--config",
         default=DEFAULT_CONFIG_RULES_STR,
-        nargs='+',
-        help='Adds configurations (sdkconfig file names) to build. This can either be '
-        'FILENAME[=NAME] or FILEPATTERN. FILENAME is the name of the sdkconfig file, '
-        'relative to the project directory, to be used. Optional NAME can be specified, '
-        'which can be used as a name of this configuration. FILEPATTERN is the name of '
-        'the sdkconfig file, relative to the project directory, with at most one wildcard. '
-        'The part captured by the wildcard is used as the name of the configuration.',
+        nargs="+",
+        help="Adds configurations (sdkconfig file names) to build. This can either be "
+        "FILENAME[=NAME] or FILEPATTERN. FILENAME is the name of the sdkconfig file, "
+        "relative to the project directory, to be used. Optional NAME can be specified, "
+        "which can be used as a name of this configuration. FILEPATTERN is the name of "
+        "the sdkconfig file, relative to the project directory, with at most one wildcard. "
+        "The part captured by the wildcard is used as the name of the configuration.",
     )
     parser.add_argument(
-        '-v',
-        '--verbose',
-        action='count',
-        help='Increase the LOGGER level of the script. Can be specified multiple times.',
+        "-v",
+        "--verbose",
+        action="count",
+        help="Increase the LOGGER level of the script. Can be specified multiple times.",
     )
     parser.add_argument(
-        '--build-verbose',
-        action='store_true',
-        help='Enable verbose output from build system.',
+        "--build-verbose",
+        action="store_true",
+        help="Enable verbose output from build system.",
     )
     parser.add_argument(
-        '--preserve-all',
-        action='store_true',
-        help='Preserve the binaries for all apps when specified.',
+        "--preserve-all",
+        action="store_true",
+        help="Preserve the binaries for all apps when specified.",
     )
-    parser.add_argument('--parallel-count', default=1, type=int, help='Number of parallel build jobs.')
     parser.add_argument(
-        '--parallel-index',
+        "--parallel-count", default=1, type=int, help="Number of parallel build jobs."
+    )
+    parser.add_argument(
+        "--parallel-index",
         default=1,
         type=int,
-        help='Index (1-based) of the job, out of the number specified by --parallel-count.',
+        help="Index (1-based) of the job, out of the number specified by --parallel-count.",
     )
     parser.add_argument(
-        '--collect-app-info',
-        default='list_job_@p.txt',
-        help='If specified, the test case name and app info json will be written to this file',
+        "--collect-app-info",
+        default="list_job_@p.txt",
+        help="If specified, the test case name and app info json will be written to this file",
     )
     parser.add_argument(
-        '--ignore-warning-str',
-        nargs='+',
-        help='Ignore the warning string that match the specified regex in the build output. space-separated list',
+        "--ignore-warning-str",
+        nargs="+",
+        help="Ignore the warning string that match the specified regex in the build output. space-separated list",
     )
     parser.add_argument(
-        '--ignore-warning-file',
+        "--ignore-warning-file",
         default=DEFAULT_IGNORE_WARNING_FILEPATH,
-        type=argparse.FileType('r'),
-        help='Ignore the warning strings in the specified file. Each line should be a regex string.',
+        type=argparse.FileType("r"),
+        help="Ignore the warning strings in the specified file. Each line should be a regex string.",
     )
     parser.add_argument(
-        '--copy-sdkconfig',
-        action='store_true',
-        help='Copy the sdkconfig file to the build directory.',
+        "--copy-sdkconfig",
+        action="store_true",
+        help="Copy the sdkconfig file to the build directory.",
     )
     parser.add_argument(
-        '--extra-preserve-dirs',
-        nargs='+',
-        help='also preserve binaries of the apps under the specified dirs',
+        "--extra-preserve-dirs",
+        nargs="+",
+        help="also preserve binaries of the apps under the specified dirs",
     )
 
     parser.add_argument(
-        '--pytest-apps',
-        action='store_true',
-        help='Only build apps required by pytest scripts. '
-        'Will build non-test-related apps if this flag is unspecified.',
+        "--pytest-apps",
+        action="store_true",
+        help="Only build apps required by pytest scripts. "
+        "Will build non-test-related apps if this flag is unspecified.",
     )
     parser.add_argument(
-        '-m',
-        '--marker-expr',
-        default='not host_test',  # host_test apps would be built and tested under the same job
+        "-m",
+        "--marker-expr",
+        default="not host_test",  # host_test apps would be built and tested under the same job
         help='only build tests matching given mark expression. For example: -m "host_test and generic". Works only'
-        'for pytest',
+        "for pytest",
     )
     parser.add_argument(
-        '-k',
-        '--filter-expr',
+        "-k",
+        "--filter-expr",
         help='only build tests matching given filter expression. For example: -k "test_hello_world". Works only'
-        'for pytest',
+        "for pytest",
     )
     parser.add_argument(
-        '--default-build-test-rules',
+        "--default-build-test-rules",
         default=DEFAULT_BUILD_TEST_RULES_FILEPATH,
-        help='default build test rules config file',
+        help="default build test rules config file",
     )
     parser.add_argument(
-        '--skip-setting-flags',
-        action='store_true',
-        help='by default this script would set the build flags exactly the same as the CI ones. '
-        'Set this flag to use your local build flags.',
+        "--skip-setting-flags",
+        action="store_true",
+        help="by default this script would set the build flags exactly the same as the CI ones. "
+        "Set this flag to use your local build flags.",
     )
     parser.add_argument(
-        '--modified-components',
+        "--modified-components",
         type=semicolon_separated_str_to_list,
-        default=os.getenv('MR_MODIFIED_COMPONENTS'),
-        help='semicolon-separated string which specifies the modified components. '
-        'app with `depends_components` set in the corresponding manifest files would only be built '
-        'if depends on any of the specified components. '
+        default=os.getenv("MR_MODIFIED_COMPONENTS"),
+        help="semicolon-separated string which specifies the modified components. "
+        "app with `depends_components` set in the corresponding manifest files would only be built "
+        "if depends on any of the specified components. "
         'If set to "", the value would be considered as None. '
         'If set to ";", the value would be considered as an empty list',
     )
     parser.add_argument(
-        '--modified-files',
+        "--modified-files",
         type=semicolon_separated_str_to_list,
-        default=os.getenv('MR_MODIFIED_FILES'),
-        help='semicolon-separated string which specifies the modified files. '
-        'app with `depends_filepatterns` set in the corresponding manifest files would only be built '
-        'if any of the specified file pattern matches any of the specified modified files. '
+        default=os.getenv("MR_MODIFIED_FILES"),
+        help="semicolon-separated string which specifies the modified files. "
+        "app with `depends_filepatterns` set in the corresponding manifest files would only be built "
+        "if any of the specified file pattern matches any of the specified modified files. "
         'If set to "", the value would be considered as None. '
         'If set to ";", the value would be considered as an empty list',
     )
     parser.add_argument(
-        '-ic',
-        '--ignore-app-dependencies-components',
+        "-ic",
+        "--ignore-app-dependencies-components",
         type=semicolon_separated_str_to_list,
-        help='semicolon-separated string which specifies the modified components used for '
-        'ignoring checking the app dependencies. '
-        'The `depends_components` and `depends_filepatterns` set in the manifest files will be ignored '
-        'when any of the specified components matches any of the modified components. '
-        'Must be used together with --modified-components. '
+        help="semicolon-separated string which specifies the modified components used for "
+        "ignoring checking the app dependencies. "
+        "The `depends_components` and `depends_filepatterns` set in the manifest files will be ignored "
+        "when any of the specified components matches any of the modified components. "
+        "Must be used together with --modified-components. "
         'If set to "", the value would be considered as None. '
         'If set to ";", the value would be considered as an empty list',
     )
     parser.add_argument(
-        '-if',
-        '--ignore-app-dependencies-filepatterns',
+        "-if",
+        "--ignore-app-dependencies-filepatterns",
         type=semicolon_separated_str_to_list,
-        help='semicolon-separated string which specifies the file patterns used for '
-        'ignoring checking the app dependencies. '
-        'The `depends_components` and `depends_filepatterns` set in the manifest files will be ignored '
-        'when any of the specified file patterns matches any of the modified files. '
-        'Must be used together with --modified-files. '
+        help="semicolon-separated string which specifies the file patterns used for "
+        "ignoring checking the app dependencies. "
+        "The `depends_components` and `depends_filepatterns` set in the manifest files will be ignored "
+        "when any of the specified file patterns matches any of the modified files. "
+        "Must be used together with --modified-files. "
         'If set to "", the value would be considered as None. '
         'If set to ";", the value would be considered as an empty list',
     )
     parser.add_argument(
-        '--junitxml',
-        default='build_summary_@p.xml',
-        help='Path to the junitxml file. If specified, the junitxml file will be generated',
+        "--junitxml",
+        default="build_summary_@p.xml",
+        help="Path to the junitxml file. If specified, the junitxml file will be generated",
     )
 
     arguments = parser.parse_args()
@@ -254,31 +263,44 @@ if __name__ == '__main__':
         arguments.paths = DEFAULT_TEST_PATHS
 
     # skip setting flags in CI
-    if not arguments.skip_setting_flags and not os.getenv('CI_JOB_ID'):
+    if not arguments.skip_setting_flags and not os.getenv("CI_JOB_ID"):
         for _k, _v in CI_ENV_VARS.items():
             os.environ[_k] = _v  # type: ignore
             print(f'env var {_k} set to "{_v}"')
 
-    if os.getenv('IS_MR_PIPELINE') == '0' or os.getenv('BUILD_AND_TEST_ALL_APPS') == '1':
-        print('Build and run all test cases, and compile all cmake apps')
+    if (
+        os.getenv("IS_MR_PIPELINE") == "0"
+        or os.getenv("BUILD_AND_TEST_ALL_APPS") == "1"
+    ):
+        print("Build and run all test cases, and compile all cmake apps")
         arguments.modified_components = None
         arguments.modified_files = None
         arguments.ignore_app_dependencies_components = None
         arguments.ignore_app_dependencies_filepatterns = None
     else:
         print(
-            f'Build and run only test cases matching:\n'
-            f'- modified components: {arguments.modified_components}\n'
-            f'- modified files: {arguments.modified_files}'
+            f"Build and run only test cases matching:\n"
+            f"- modified components: {arguments.modified_components}\n"
+            f"- modified files: {arguments.modified_files}"
         )
 
-        if arguments.modified_components is not None and not arguments.ignore_app_dependencies_components:
+        if (
+            arguments.modified_components is not None
+            and not arguments.ignore_app_dependencies_components
+        ):
             # setting default values
-            arguments.ignore_app_dependencies_components = DEFAULT_FULL_BUILD_TEST_COMPONENTS
+            arguments.ignore_app_dependencies_components = (
+                DEFAULT_FULL_BUILD_TEST_COMPONENTS
+            )
 
-        if arguments.modified_files is not None and not arguments.ignore_app_dependencies_filepatterns:
+        if (
+            arguments.modified_files is not None
+            and not arguments.ignore_app_dependencies_filepatterns
+        ):
             # setting default values
-            arguments.ignore_app_dependencies_filepatterns = DEFAULT_FULL_BUILD_TEST_FILEPATTERNS
+            arguments.ignore_app_dependencies_filepatterns = (
+                DEFAULT_FULL_BUILD_TEST_FILEPATTERNS
+            )
 
     main(arguments)
 

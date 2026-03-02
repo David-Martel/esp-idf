@@ -11,7 +11,9 @@ import typing as t
 from functools import cached_property
 from pathlib import Path
 
-IDF_PATH: str = os.path.abspath(os.getenv('IDF_PATH', os.path.join(os.path.dirname(__file__), '..', '..')))
+IDF_PATH: str = os.path.abspath(
+    os.getenv("IDF_PATH", os.path.join(os.path.dirname(__file__), "..", ".."))
+)
 
 
 def get_submodule_dirs(full_path: bool = False) -> t.List[str]:
@@ -25,20 +27,20 @@ def get_submodule_dirs(full_path: bool = False) -> t.List[str]:
         lines = (
             subprocess.check_output(
                 [
-                    'git',
-                    'config',
-                    '--file',
-                    os.path.realpath(os.path.join(IDF_PATH, '.gitmodules')),
-                    '--get-regexp',
-                    'path',
+                    "git",
+                    "config",
+                    "--file",
+                    os.path.realpath(os.path.join(IDF_PATH, ".gitmodules")),
+                    "--get-regexp",
+                    "path",
                 ]
             )
-            .decode('utf8')
+            .decode("utf8")
             .strip()
-            .split('\n')
+            .split("\n")
         )
         for line in lines:
-            _, path = line.split(' ')
+            _, path = line.split(" ")
             if full_path:
                 dirs.append(os.path.join(IDF_PATH, path))
             else:
@@ -51,11 +53,15 @@ def get_submodule_dirs(full_path: bool = False) -> t.List[str]:
 
 def _check_git_filemode(full_path: str) -> bool:
     try:
-        stdout = subprocess.check_output(['git', 'ls-files', '--stage', full_path]).strip().decode('utf-8')
+        stdout = (
+            subprocess.check_output(["git", "ls-files", "--stage", full_path])
+            .strip()
+            .decode("utf-8")
+        )
     except subprocess.CalledProcessError:
         return True
 
-    mode = stdout.split(' ', 1)[0]  # e.g. 100644 for a rw-r--r--
+    mode = stdout.split(" ", 1)[0]  # e.g. 100644 for a rw-r--r--
     if any([int(i, 8) & 1 for i in mode[-3:]]):
         return True
     return False
@@ -67,7 +73,7 @@ def is_executable(full_path: str) -> bool:
     :param full_path: file full path
     :return: True is it's an executable file
     """
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         return _check_git_filemode(full_path)
     return os.access(full_path, os.X_OK)
 
@@ -86,12 +92,12 @@ def get_git_files(path: str = IDF_PATH, full_path: bool = False) -> t.List[str]:
         # This would affect the return value of `git ls-files`, unset this would use the `cwd`value or its parent
         # folder if no `.git` folder found in `cwd`.
         workaround_env = os.environ.copy()
-        workaround_env.pop('GIT_DIR', None)
+        workaround_env.pop("GIT_DIR", None)
         files = (
-            subprocess.check_output(['git', 'ls-files'], cwd=path, env=workaround_env)
-            .decode('utf8')
+            subprocess.check_output(["git", "ls-files"], cwd=path, env=workaround_env)
+            .decode("utf8")
             .strip()
-            .split('\n')
+            .split("\n")
         )
     except Exception as e:  # pylint: disable=W0703
         logging.warning(str(e))
@@ -113,7 +119,9 @@ def to_list(s: t.Any) -> t.List[t.Any]:
 
 
 class GitlabYmlConfig:
-    def __init__(self, root_yml_filepath: str = os.path.join(IDF_PATH, '.gitlab-ci.yml')) -> None:
+    def __init__(
+        self, root_yml_filepath: str = os.path.join(IDF_PATH, ".gitlab-ci.yml")
+    ) -> None:
         self._config: t.Dict[str, t.Any] = {}
         self._defaults: t.Dict[str, t.Any] = {}
 
@@ -127,11 +135,13 @@ class GitlabYmlConfig:
         root_yml = yaml.load(open(root_yml_filepath), Loader=yaml.FullLoader)
 
         # expanding "include"
-        for item in root_yml.pop('include', []) or []:
-            all_config.update(yaml.load(open(os.path.join(IDF_PATH, item)), Loader=yaml.FullLoader))
+        for item in root_yml.pop("include", []) or []:
+            all_config.update(
+                yaml.load(open(os.path.join(IDF_PATH, item)), Loader=yaml.FullLoader)
+            )
 
-        if 'default' in all_config:
-            self._defaults = all_config.pop('default')
+        if "default" in all_config:
+            self._defaults = all_config.pop("default")
 
         self._config = all_config
 
@@ -155,7 +165,7 @@ class GitlabYmlConfig:
 
     @cached_property
     def global_keys(self) -> t.List[str]:
-        return ['default', 'include', 'workflow', 'variables', 'stages']
+        return ["default", "include", "workflow", "variables", "stages"]
 
     @cached_property
     def anchors(self) -> t.Dict[str, t.Any]:
@@ -183,14 +193,14 @@ class GitlabYmlConfig:
 
             if isinstance(v, (str, list)):
                 self._anchor_keys.add(k)
-            elif k.startswith('.if-'):
+            elif k.startswith(".if-"):
                 self._anchor_keys.add(k)
-            elif k.startswith('.'):
+            elif k.startswith("."):
                 self._template_keys.add(k)
             elif isinstance(v, dict):
                 self._job_keys.add(k)
             else:
-                raise ValueError(f'Unknown type for key {k} with value {v}')
+                raise ValueError(f"Unknown type for key {k} with value {v}")
 
         # no need to expand anchor
 
@@ -215,7 +225,7 @@ class GitlabYmlConfig:
         return d1
 
     def _expand_extends(self, name: str) -> t.Dict[str, t.Any]:
-        extends = to_list(self.config[name].pop('extends', None))
+        extends = to_list(self.config[name].pop("extends", None))
         if not extends:
             return self.config[name]  # type: ignore
 
@@ -227,7 +237,7 @@ class GitlabYmlConfig:
             for i in extends:
                 d.update(self._expand_extends(i))
 
-            extends = to_list(self.config[name].pop('extends', None))
+            extends = to_list(self.config[name].pop("extends", None))
 
         self.config[name] = self._merge_dict(d, original_d)
         return self.config[name]  # type: ignore
@@ -236,8 +246,8 @@ class GitlabYmlConfig:
 def get_all_manifest_files() -> t.List[str]:
     paths: t.List[str] = []
 
-    for p in Path(IDF_PATH).glob('**/.build-test-rules.yml'):
-        if 'managed_components' in p.parts:
+    for p in Path(IDF_PATH).glob("**/.build-test-rules.yml"):
+        if "managed_components" in p.parts:
             continue
 
         paths.append(str(p))
@@ -259,7 +269,7 @@ def sanitize_job_name(name: str) -> str:
     :param name: job name
     :return: sanitized job name
     """
-    return re.sub(r' \d+/\d+', '', name)
+    return re.sub(r" \d+/\d+", "", name)
 
 
 def idf_relpath(p: str) -> str:

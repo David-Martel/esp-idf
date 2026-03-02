@@ -12,7 +12,7 @@ from pytest_embedded_idf.unity_tester import CaseTester
 @pytest.mark.esp32c6
 @pytest.mark.esp32c61
 @pytest.mark.wifi_two_dut
-@pytest.mark.parametrize('count', [2], indirect=True)
+@pytest.mark.parametrize("count", [2], indirect=True)
 def test_wifi_connect_cases(case_tester: CaseTester) -> None:  # type: ignore
     case_tester.run_all_cases()
 
@@ -21,9 +21,9 @@ def test_wifi_connect_cases(case_tester: CaseTester) -> None:  # type: ignore
 @pytest.mark.wifi_two_dut
 @pytest.mark.xtal_26mhz
 @pytest.mark.parametrize(
-    'count, config, baud',
+    "count, config, baud",
     [
-        (2, 'esp32c2_xtal26m', '74880'),
+        (2, "esp32c2_xtal26m", "74880"),
     ],
     indirect=True,
 )

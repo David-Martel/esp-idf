@@ -8,14 +8,14 @@ from pytest_embedded import Dut
 @pytest.mark.esp32c3
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'default',
-        'release',
-        'fastseek',
-        'auto_fsync',
-        'no_dyn_buffers',
-    ]
+        "default",
+        "release",
+        "fastseek",
+        "auto_fsync",
+        "no_dyn_buffers",
+    ],
 )
 def test_fatfs_flash_wl_generic(dut: Dut) -> None:
     dut.run_all_single_board_cases(timeout=240)
@@ -25,10 +25,10 @@ def test_fatfs_flash_wl_generic(dut: Dut) -> None:
 @pytest.mark.generic
 @pytest.mark.psram
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'psram',
-    ]
+        "psram",
+    ],
 )
 def test_fatfs_flash_wl_psram(dut: Dut) -> None:
     dut.run_all_single_board_cases(timeout=180)

@@ -7,10 +7,10 @@ from pytest_embedded import Dut
 @pytest.mark.supported_targets
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'no_rom_impl_components',
-        'rom_impl_components',
+        "no_rom_impl_components",
+        "rom_impl_components",
     ],
     indirect=True,
 )

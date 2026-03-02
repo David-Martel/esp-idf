@@ -7,14 +7,26 @@ from construct import Const, Int8ul, Int16ul, Int32ul, PaddedString, Struct
 
 from .exceptions import LowerCaseException, TooLongNameException
 from .fatfs_state import FATFSState
-from .utils import (DATETIME, EMPTY_BYTE, FATFS_INCEPTION, MAX_EXT_SIZE, MAX_NAME_SIZE, SHORT_NAMES_ENCODING,
-                    FATDefaults, build_date_entry, build_time_entry, is_valid_fatfs_name, pad_string)
+from .utils import (
+    DATETIME,
+    EMPTY_BYTE,
+    FATFS_INCEPTION,
+    MAX_EXT_SIZE,
+    MAX_NAME_SIZE,
+    SHORT_NAMES_ENCODING,
+    FATDefaults,
+    build_date_entry,
+    build_time_entry,
+    is_valid_fatfs_name,
+    pad_string,
+)
 
 
 class Entry:
     """
     The class Entry represents entry of the directory.
     """
+
     ATTR_READ_ONLY: int = 0x01
     ATTR_HIDDEN: int = 0x02
     ATTR_SYSTEM: int = 0x04
@@ -43,38 +55,48 @@ class Entry:
     SHORT_ENTRY_LN: int = 0
 
     # The 1st January 1980 00:00:00
-    DEFAULT_DATE: DATETIME = (FATFS_INCEPTION.year, FATFS_INCEPTION.month, FATFS_INCEPTION.day)
-    DEFAULT_TIME: DATETIME = (FATFS_INCEPTION.hour, FATFS_INCEPTION.minute, FATFS_INCEPTION.second)
-
-    ENTRY_FORMAT_SHORT_NAME = Struct(
-        'DIR_Name' / PaddedString(MAX_NAME_SIZE, SHORT_NAMES_ENCODING),
-        'DIR_Name_ext' / PaddedString(MAX_EXT_SIZE, SHORT_NAMES_ENCODING),
-        'DIR_Attr' / Int8ul,
-        'DIR_NTRes' / Int8ul,  # this tagged for lfn (0x00 for short entry in lfn, 0x18 for short name)
-        'DIR_CrtTimeTenth' / Const(EMPTY_BYTE),  # ignored by esp-idf fatfs library
-        'DIR_CrtTime' / Int16ul,  # ignored by esp-idf fatfs library
-        'DIR_CrtDate' / Int16ul,  # ignored by esp-idf fatfs library
-        'DIR_LstAccDate' / Int16ul,  # must be same as DIR_WrtDate
-        'DIR_FstClusHI' / Const(2 * EMPTY_BYTE),
-        'DIR_WrtTime' / Int16ul,
-        'DIR_WrtDate' / Int16ul,
-        'DIR_FstClusLO' / Int16ul,
-        'DIR_FileSize' / Int32ul,
+    DEFAULT_DATE: DATETIME = (
+        FATFS_INCEPTION.year,
+        FATFS_INCEPTION.month,
+        FATFS_INCEPTION.day,
+    )
+    DEFAULT_TIME: DATETIME = (
+        FATFS_INCEPTION.hour,
+        FATFS_INCEPTION.minute,
+        FATFS_INCEPTION.second,
     )
 
-    def __init__(self,
-                 entry_id: int,
-                 parent_dir_entries_address: int,
-                 fatfs_state: FATFSState) -> None:
+    ENTRY_FORMAT_SHORT_NAME = Struct(
+        "DIR_Name" / PaddedString(MAX_NAME_SIZE, SHORT_NAMES_ENCODING),
+        "DIR_Name_ext" / PaddedString(MAX_EXT_SIZE, SHORT_NAMES_ENCODING),
+        "DIR_Attr" / Int8ul,
+        "DIR_NTRes"
+        / Int8ul,  # this tagged for lfn (0x00 for short entry in lfn, 0x18 for short name)
+        "DIR_CrtTimeTenth" / Const(EMPTY_BYTE),  # ignored by esp-idf fatfs library
+        "DIR_CrtTime" / Int16ul,  # ignored by esp-idf fatfs library
+        "DIR_CrtDate" / Int16ul,  # ignored by esp-idf fatfs library
+        "DIR_LstAccDate" / Int16ul,  # must be same as DIR_WrtDate
+        "DIR_FstClusHI" / Const(2 * EMPTY_BYTE),
+        "DIR_WrtTime" / Int16ul,
+        "DIR_WrtDate" / Int16ul,
+        "DIR_FstClusLO" / Int16ul,
+        "DIR_FileSize" / Int32ul,
+    )
+
+    def __init__(
+        self, entry_id: int, parent_dir_entries_address: int, fatfs_state: FATFSState
+    ) -> None:
         self.fatfs_state: FATFSState = fatfs_state
         self.id: int = entry_id
-        self.entry_address: int = parent_dir_entries_address + self.id * FATDefaults.ENTRY_SIZE
+        self.entry_address: int = (
+            parent_dir_entries_address + self.id * FATDefaults.ENTRY_SIZE
+        )
         self._is_alias: bool = False
         self._is_empty: bool = True
 
     @staticmethod
     def get_cluster_id(obj_: dict) -> int:
-        cluster_id_: int = obj_['DIR_FstClusLO']
+        cluster_id_: int = obj_["DIR_FstClusLO"]
         return cluster_id_
 
     @property
@@ -92,7 +114,9 @@ class Entry:
         return entry_
 
     @staticmethod
-    def _build_entry_long(names: List[bytes], checksum: int, order: int, is_last: bool) -> bytes:
+    def _build_entry_long(
+        names: List[bytes], checksum: int, order: int, is_last: bool
+    ) -> bytes:
         """
         Long entry starts with 1 bytes of the order, if the entry is the last in the chain it is or-masked with 0x40,
         otherwise is without change (or masked with 0x00). The following example shows 3 entries:
@@ -106,33 +130,43 @@ class Entry:
         00002040: 54 48 49 53 49 53 7E 31 54 58 54 20 00 00 00 00    THISIS~1TXT.....
         00002050: 21 00 00 00 00 00 00 00 21 00 02 00 15 00 00 00    !.......!.......
         """
-        order |= (Entry.LAST_RECORD_LFN_ENTRY if is_last else 0x00)
-        long_entry: bytes = (Int8ul.build(order) +  # order of the long name entry (possibly masked with 0x40)
-                             names[0] +  # first 5 characters (10 bytes) of the name part
-                             Int8ul.build(Entry.ATTR_LONG_NAME) +  # one byte entity type ATTR_LONG_NAME
-                             Int8ul.build(0) +  # one byte of zeros
-                             Int8ul.build(checksum) +  # lfn_checksum defined in utils.py
-                             names[1] +  # next 6 characters (12 bytes) of the name part
-                             Int16ul.build(0) +  # 2 bytes of zeros
-                             names[2])  # last 2 characters (4 bytes) of the name part
+        order |= Entry.LAST_RECORD_LFN_ENTRY if is_last else 0x00
+        long_entry: bytes = (
+            Int8ul.build(
+                order
+            )  # order of the long name entry (possibly masked with 0x40)
+            + names[0]  # first 5 characters (10 bytes) of the name part
+            + Int8ul.build(Entry.ATTR_LONG_NAME)  # one byte entity type ATTR_LONG_NAME
+            + Int8ul.build(0)  # one byte of zeros
+            + Int8ul.build(checksum)  # lfn_checksum defined in utils.py
+            + names[1]  # next 6 characters (12 bytes) of the name part
+            + Int16ul.build(0)  # 2 bytes of zeros
+            + names[2]
+        )  # last 2 characters (4 bytes) of the name part
         return long_entry
 
     @staticmethod
     def parse_entry_long(entry_bytes_: bytes, my_check: int) -> dict:
         order_ = Int8ul.parse(entry_bytes_[0:1])
         names0 = entry_bytes_[1:11]
-        if Int8ul.parse(entry_bytes_[12:13]) != 0 or Int16ul.parse(entry_bytes_[26:28]) != 0 or Int8ul.parse(entry_bytes_[11:12]) != 15:
+        if (
+            Int8ul.parse(entry_bytes_[12:13]) != 0
+            or Int16ul.parse(entry_bytes_[26:28]) != 0
+            or Int8ul.parse(entry_bytes_[11:12]) != 15
+        ):
             return {}
         if Int8ul.parse(entry_bytes_[13:14]) != my_check:
             return {}
         names1 = entry_bytes_[14:26]
         names2 = entry_bytes_[28:32]
         return {
-            'order': order_,
-            'name1': names0,
-            'name2': names1,
-            'name3': names2,
-            'is_last': bool(order_ & Entry.LAST_RECORD_LFN_ENTRY == Entry.LAST_RECORD_LFN_ENTRY)
+            "order": order_,
+            "name1": names0,
+            "name2": names1,
+            "name3": names2,
+            "is_last": bool(
+                order_ & Entry.LAST_RECORD_LFN_ENTRY == Entry.LAST_RECORD_LFN_ENTRY
+            ),
         }
 
     @property
@@ -141,7 +175,9 @@ class Entry:
         :returns: Bytes defining the entry belonging to the given instance.
         """
         start_: int = self.entry_address
-        entry_: bytes = self.fatfs_state.binary_image[start_: start_ + FATDefaults.ENTRY_SIZE]
+        entry_: bytes = self.fatfs_state.binary_image[
+            start_ : start_ + FATDefaults.ENTRY_SIZE
+        ]
         return entry_
 
     @entry_bytes.setter
@@ -152,24 +188,28 @@ class Entry:
 
         The setter sets the content of the entry in bytes.
         """
-        self.fatfs_state.binary_image[self.entry_address: self.entry_address + FATDefaults.ENTRY_SIZE] = value
+        self.fatfs_state.binary_image[
+            self.entry_address : self.entry_address + FATDefaults.ENTRY_SIZE
+        ] = value
 
     def _clean_entry(self) -> None:
         self.entry_bytes: bytes = FATDefaults.ENTRY_SIZE * EMPTY_BYTE
 
-    def allocate_entry(self,
-                       first_cluster_id: int,
-                       entity_name: str,
-                       entity_type: int,
-                       entity_extension: str = '',
-                       size: int = 0,
-                       date: DATETIME = DEFAULT_DATE,
-                       time: DATETIME = DEFAULT_TIME,
-                       lfn_order: int = SHORT_ENTRY,
-                       lfn_names: Optional[List[bytes]] = None,
-                       lfn_checksum_: int = 0,
-                       fits_short: bool = False,
-                       lfn_is_last: bool = False) -> None:
+    def allocate_entry(
+        self,
+        first_cluster_id: int,
+        entity_name: str,
+        entity_type: int,
+        entity_extension: str = "",
+        size: int = 0,
+        date: DATETIME = DEFAULT_DATE,
+        time: DATETIME = DEFAULT_TIME,
+        lfn_order: int = SHORT_ENTRY,
+        lfn_names: Optional[List[bytes]] = None,
+        lfn_checksum_: int = 0,
+        fits_short: bool = False,
+        lfn_is_last: bool = False,
+    ) -> None:
         """
         :param first_cluster_id: id of the first data cluster for given entry
         :param entity_name: name recorded in the entry
@@ -192,9 +232,13 @@ class Entry:
         :raises TooLongNameException: When long_names_enabled is set to False and name doesn't fit to 8.3 filename
         an exception is raised
         """
-        valid_full_name: bool = is_valid_fatfs_name(entity_name) and is_valid_fatfs_name(entity_extension)
+        valid_full_name: bool = is_valid_fatfs_name(
+            entity_name
+        ) and is_valid_fatfs_name(entity_extension)
         if not (valid_full_name or lfn_order >= 0):
-            raise LowerCaseException('Lower case is not supported in short name entry, use upper case.')
+            raise LowerCaseException(
+                "Lower case is not supported in short name entry, use upper case."
+            )
 
         if self.fatfs_state.use_default_datetime:
             date = self.DEFAULT_DATE
@@ -204,13 +248,23 @@ class Entry:
         self._clean_entry()
         self._is_empty = False
 
-        object_name = entity_name.upper() if not self.fatfs_state.long_names_enabled else entity_name
-        object_extension = entity_extension.upper() if not self.fatfs_state.long_names_enabled else entity_extension
+        object_name = (
+            entity_name.upper()
+            if not self.fatfs_state.long_names_enabled
+            else entity_name
+        )
+        object_extension = (
+            entity_extension.upper()
+            if not self.fatfs_state.long_names_enabled
+            else entity_extension
+        )
 
-        exceeds_short_name: bool = len(object_name) > MAX_NAME_SIZE or len(object_extension) > MAX_EXT_SIZE
+        exceeds_short_name: bool = (
+            len(object_name) > MAX_NAME_SIZE or len(object_extension) > MAX_EXT_SIZE
+        )
         if not self.fatfs_state.long_names_enabled and exceeds_short_name:
             raise TooLongNameException(
-                'Maximal length of the object name is {} characters and {} characters for extension!'.format(
+                "Maximal length of the object name is {} characters and {} characters for extension!".format(
                     MAX_NAME_SIZE, MAX_EXT_SIZE
                 )
             )
@@ -220,25 +274,28 @@ class Entry:
         if lfn_order in (self.SHORT_ENTRY, self.SHORT_ENTRY_LN):
             date_entry_: int = build_date_entry(*date)
             time_entry: int = build_time_entry(*time)
-            self.fatfs_state.binary_image[start_address: end_address] = self._build_entry(
-                DIR_Name=pad_string(object_name, size=MAX_NAME_SIZE),
-                DIR_Name_ext=pad_string(object_extension, size=MAX_EXT_SIZE),
-                DIR_Attr=entity_type,
-                DIR_NTRes=0x00 if (not self.fatfs_state.long_names_enabled) or (not fits_short) else 0x18,
-                DIR_FstClusLO=first_cluster_id,
-                DIR_FileSize=size,
-                DIR_CrtDate=date_entry_,  # ignored by esp-idf fatfs library
-                DIR_LstAccDate=date_entry_,  # must be same as DIR_WrtDate
-                DIR_WrtDate=date_entry_,
-                DIR_CrtTime=time_entry,  # ignored by esp-idf fatfs library
-                DIR_WrtTime=time_entry
+            self.fatfs_state.binary_image[start_address:end_address] = (
+                self._build_entry(
+                    DIR_Name=pad_string(object_name, size=MAX_NAME_SIZE),
+                    DIR_Name_ext=pad_string(object_extension, size=MAX_EXT_SIZE),
+                    DIR_Attr=entity_type,
+                    DIR_NTRes=0x00
+                    if (not self.fatfs_state.long_names_enabled) or (not fits_short)
+                    else 0x18,
+                    DIR_FstClusLO=first_cluster_id,
+                    DIR_FileSize=size,
+                    DIR_CrtDate=date_entry_,  # ignored by esp-idf fatfs library
+                    DIR_LstAccDate=date_entry_,  # must be same as DIR_WrtDate
+                    DIR_WrtDate=date_entry_,
+                    DIR_CrtTime=time_entry,  # ignored by esp-idf fatfs library
+                    DIR_WrtTime=time_entry,
+                )
             )
         else:
             assert lfn_names is not None
-            self.fatfs_state.binary_image[start_address: end_address] = self._build_entry_long(lfn_names,
-                                                                                               lfn_checksum_,
-                                                                                               lfn_order,
-                                                                                               lfn_is_last)
+            self.fatfs_state.binary_image[start_address:end_address] = (
+                self._build_entry_long(lfn_names, lfn_checksum_, lfn_order, lfn_is_last)
+            )
 
     def update_content_size(self, content_size: int) -> None:
         """

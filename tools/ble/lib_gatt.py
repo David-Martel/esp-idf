@@ -25,42 +25,42 @@ try:
     import dbus
     import dbus.service
 except ImportError as e:
-    if 'linux' not in sys.platform:
+    if "linux" not in sys.platform:
         raise e
     print(e)
-    print('Install packages `libgirepository1.0-dev gir1.2-gtk-3.0 libcairo2-dev libdbus-1-dev libdbus-glib-1-dev` for resolving the issue')
-    print('Run `pip install -r $IDF_PATH/tools/ble/requirements.txt` for resolving the issue')
+    print(
+        "Install packages `libgirepository1.0-dev gir1.2-gtk-3.0 libcairo2-dev libdbus-1-dev libdbus-glib-1-dev` for resolving the issue"
+    )
+    print(
+        "Run `pip install -r $IDF_PATH/tools/ble/requirements.txt` for resolving the issue"
+    )
     raise
 
-DBUS_OM_IFACE = 'org.freedesktop.DBus.ObjectManager'
-DBUS_PROP_IFACE = 'org.freedesktop.DBus.Properties'
-GATT_MANAGER_IFACE = 'org.bluez.GattManager1'
-GATT_SERVICE_IFACE = 'org.bluez.GattService1'
-GATT_CHRC_IFACE = 'org.bluez.GattCharacteristic1'
-GATT_DESC_IFACE = 'org.bluez.GattDescriptor1'
+DBUS_OM_IFACE = "org.freedesktop.DBus.ObjectManager"
+DBUS_PROP_IFACE = "org.freedesktop.DBus.Properties"
+GATT_MANAGER_IFACE = "org.bluez.GattManager1"
+GATT_SERVICE_IFACE = "org.bluez.GattService1"
+GATT_CHRC_IFACE = "org.bluez.GattCharacteristic1"
+GATT_DESC_IFACE = "org.bluez.GattDescriptor1"
 
 
-SERVICE_UUIDS = {
-    'ALERT_NOTIF_SVC_UUID': '00001811-0000-1000-8000-00805f9b34fb'
-}
+SERVICE_UUIDS = {"ALERT_NOTIF_SVC_UUID": "00001811-0000-1000-8000-00805f9b34fb"}
 
 CHAR_UUIDS = {
-    'SUPPORT_NEW_ALERT_UUID': '00002A47-0000-1000-8000-00805f9b34fb',
-    'ALERT_NOTIF_UUID': '00002A44-0000-1000-8000-00805f9b34fb',
-    'UNREAD_ALERT_STATUS_UUID': '00002A45-0000-1000-8000-00805f9b34fb'
+    "SUPPORT_NEW_ALERT_UUID": "00002A47-0000-1000-8000-00805f9b34fb",
+    "ALERT_NOTIF_UUID": "00002A44-0000-1000-8000-00805f9b34fb",
+    "UNREAD_ALERT_STATUS_UUID": "00002A45-0000-1000-8000-00805f9b34fb",
 }
 
-DESCR_UUIDS = {
-    'CCCD_UUID': '00002902-0000-1000-8000-00805f9b34fb'
-}
+DESCR_UUIDS = {"CCCD_UUID": "00002902-0000-1000-8000-00805f9b34fb"}
 
 
 class InvalidArgsException(dbus.exceptions.DBusException):
-    _dbus_error_name = 'org.freedesktop.DBus.Error.InvalidArgs'
+    _dbus_error_name = "org.freedesktop.DBus.Error.InvalidArgs"
 
 
 class NotSupportedException(dbus.exceptions.DBusException):
-    _dbus_error_name = 'org.bluez.Error.NotSupported'
+    _dbus_error_name = "org.bluez.Error.NotSupported"
 
 
 class Application(dbus.service.Object):
@@ -79,7 +79,7 @@ class Application(dbus.service.Object):
     def add_service(self, service):
         self.services.append(service)
 
-    @dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')
+    @dbus.service.method(DBUS_OM_IFACE, out_signature="a{oa{sa{sv}}}")
     def GetManagedObjects(self):
         response = {}
 
@@ -102,12 +102,13 @@ class Application(dbus.service.Object):
 
 
 class AlertNotificationApp(Application):
-    '''
-        Alert Notification Application
-    '''
+    """
+    Alert Notification Application
+    """
+
     def __init__(self, bus, path):
         Application.__init__(self, bus, path)
-        self.service = AlertNotificationService(bus, '0001')
+        self.service = AlertNotificationService(bus, "0001")
         self.add_service(self.service)
 
 
@@ -115,7 +116,8 @@ class Service(dbus.service.Object):
     """
     org.bluez.GattService1 interface implementation
     """
-    PATH_BASE = '/org/bluez/hci0/service'
+
+    PATH_BASE = "/org/bluez/hci0/service"
 
     def __init__(self, bus, index, uuid, primary=False):
         self.path = self.PATH_BASE + str(index)
@@ -128,11 +130,11 @@ class Service(dbus.service.Object):
     def get_properties(self):
         return {
             GATT_SERVICE_IFACE: {
-                'UUID': self.uuid,
-                'Primary': self.primary,
-                'Characteristics': dbus.Array(
-                    self.get_characteristic_paths(),
-                    signature='o')
+                "UUID": self.uuid,
+                "Primary": self.primary,
+                "Characteristics": dbus.Array(
+                    self.get_characteristic_paths(), signature="o"
+                ),
             }
         }
 
@@ -151,9 +153,7 @@ class Service(dbus.service.Object):
     def get_characteristics(self):
         return self.characteristics
 
-    @dbus.service.method(DBUS_PROP_IFACE,
-                         in_signature='s',
-                         out_signature='a{sv}')
+    @dbus.service.method(DBUS_PROP_IFACE, in_signature="s", out_signature="a{sv}")
     def GetAll(self, interface):
         if interface != GATT_SERVICE_IFACE:
             raise InvalidArgsException()
@@ -164,8 +164,9 @@ class Characteristic(dbus.service.Object):
     """
     org.bluez.GattCharacteristic1 interface implementation
     """
+
     def __init__(self, bus, index, uuid, flags, service):
-        self.path = service.path + '/char' + str(index)
+        self.path = service.path + "/char" + str(index)
         self.bus = bus
         self.uuid = uuid
         self.service = service
@@ -177,12 +178,11 @@ class Characteristic(dbus.service.Object):
     def get_properties(self):
         return {
             GATT_CHRC_IFACE: {
-                'Service': self.service.get_path(),
-                'UUID': self.uuid,
-                'Flags': self.flags,
-                'Value': self.value,
-                'Descriptors': dbus.Array(self.get_descriptor_paths(), signature='o')
-
+                "Service": self.service.get_path(),
+                "UUID": self.uuid,
+                "Flags": self.flags,
+                "Value": self.value,
+                "Descriptors": dbus.Array(self.get_descriptor_paths(), signature="o"),
             }
         }
 
@@ -201,34 +201,33 @@ class Characteristic(dbus.service.Object):
     def get_descriptors(self):
         return self.descriptors
 
-    @dbus.service.method(DBUS_PROP_IFACE, in_signature='s', out_signature='a{sv}')
+    @dbus.service.method(DBUS_PROP_IFACE, in_signature="s", out_signature="a{sv}")
     def GetAll(self, interface):
         if interface != GATT_CHRC_IFACE:
             raise InvalidArgsException()
         return self.get_properties()[GATT_CHRC_IFACE]
 
-    @dbus.service.method(GATT_CHRC_IFACE, in_signature='a{sv}', out_signature='ay')
+    @dbus.service.method(GATT_CHRC_IFACE, in_signature="a{sv}", out_signature="ay")
     def ReadValue(self, options):
-        print('\nDefault ReadValue called, returning error')
+        print("\nDefault ReadValue called, returning error")
         raise NotSupportedException()
 
-    @dbus.service.method(GATT_CHRC_IFACE, in_signature='aya{sv}')
+    @dbus.service.method(GATT_CHRC_IFACE, in_signature="aya{sv}")
     def WriteValue(self, value, options):
-        print('\nDefault WriteValue called, returning error')
+        print("\nDefault WriteValue called, returning error")
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE)
     def StartNotify(self):
-        print('Default StartNotify called, returning error')
+        print("Default StartNotify called, returning error")
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE)
     def StopNotify(self):
-        print('Default StopNotify called, returning error')
+        print("Default StopNotify called, returning error")
         raise NotSupportedException()
 
-    @dbus.service.signal(DBUS_PROP_IFACE,
-                         signature='sa{sv}as')
+    @dbus.service.signal(DBUS_PROP_IFACE, signature="sa{sv}as")
     def PropertiesChanged(self, interface, changed, invalidated):
         pass
         # print('\nProperties Changed')
@@ -238,8 +237,9 @@ class Descriptor(dbus.service.Object):
     """
     org.bluez.GattDescriptor1 interface implementation
     """
+
     def __init__(self, bus, index, uuid, flags, characteristic):
-        self.path = characteristic.path + '/desc' + str(index)
+        self.path = characteristic.path + "/desc" + str(index)
         self.bus = bus
         self.uuid = uuid
         self.flags = flags
@@ -249,35 +249,32 @@ class Descriptor(dbus.service.Object):
     def get_properties(self):
         return {
             GATT_DESC_IFACE: {
-                'Characteristic': self.chrc.get_path(),
-                'UUID': self.uuid,
-                'Flags': self.flags,
+                "Characteristic": self.chrc.get_path(),
+                "UUID": self.uuid,
+                "Flags": self.flags,
             }
         }
 
     def get_path(self):
         return dbus.ObjectPath(self.path)
 
-    @dbus.service.method(DBUS_PROP_IFACE,
-                         in_signature='s',
-                         out_signature='a{sv}')
+    @dbus.service.method(DBUS_PROP_IFACE, in_signature="s", out_signature="a{sv}")
     def GetAll(self, interface):
         if interface != GATT_DESC_IFACE:
             raise InvalidArgsException()
         return self.get_properties()[GATT_DESC_IFACE]
 
-    @dbus.service.method(GATT_DESC_IFACE, in_signature='a{sv}', out_signature='ay')
+    @dbus.service.method(GATT_DESC_IFACE, in_signature="a{sv}", out_signature="ay")
     def ReadValue(self, options):
-        print('Default ReadValue called, returning error')
+        print("Default ReadValue called, returning error")
         raise NotSupportedException()
 
-    @dbus.service.method(GATT_DESC_IFACE, in_signature='aya{sv}')
+    @dbus.service.method(GATT_DESC_IFACE, in_signature="aya{sv}")
     def WriteValue(self, value, options):
-        print('Default WriteValue called, returning error')
+        print("Default WriteValue called, returning error")
         raise NotSupportedException()
 
-    @dbus.service.signal(DBUS_PROP_IFACE,
-                         signature='sa{sv}as')
+    @dbus.service.signal(DBUS_PROP_IFACE, signature="sa{sv}as")
     def PropertiesChanged(self, interface, changed, invalidated):
         pass
         # print('\nProperties Changed')
@@ -285,10 +282,16 @@ class Descriptor(dbus.service.Object):
 
 class AlertNotificationService(Service):
     def __init__(self, bus, index):
-        Service.__init__(self, bus, index, SERVICE_UUIDS['ALERT_NOTIF_SVC_UUID'], primary=True)
-        self.add_characteristic(SupportedNewAlertCategoryCharacteristic(bus, '0001', self))
-        self.add_characteristic(AlertNotificationControlPointCharacteristic(bus, '0002', self))
-        self.add_characteristic(UnreadAlertStatusCharacteristic(bus, '0003', self))
+        Service.__init__(
+            self, bus, index, SERVICE_UUIDS["ALERT_NOTIF_SVC_UUID"], primary=True
+        )
+        self.add_characteristic(
+            SupportedNewAlertCategoryCharacteristic(bus, "0001", self)
+        )
+        self.add_characteristic(
+            AlertNotificationControlPointCharacteristic(bus, "0002", self)
+        )
+        self.add_characteristic(UnreadAlertStatusCharacteristic(bus, "0003", self))
 
     def get_char_status(self, uuid, status):
         for char in self.characteristics:
@@ -301,10 +304,8 @@ class AlertNotificationService(Service):
 class SupportedNewAlertCategoryCharacteristic(Characteristic):
     def __init__(self, bus, index, service):
         Characteristic.__init__(
-            self, bus, index,
-            CHAR_UUIDS['SUPPORT_NEW_ALERT_UUID'],
-            ['read'],
-            service)
+            self, bus, index, CHAR_UUIDS["SUPPORT_NEW_ALERT_UUID"], ["read"], service
+        )
         self.value = [dbus.Byte(2)]
         self.status = []
 
@@ -312,19 +313,17 @@ class SupportedNewAlertCategoryCharacteristic(Characteristic):
         val_list = []
         for val in self.value:
             val_list.append(dbus.Byte(val))
-        print('Read Request received\n', '\tSupportedNewAlertCategoryCharacteristic')
-        print('\tValue:', '\t', val_list)
-        self.status.append('read')
+        print("Read Request received\n", "\tSupportedNewAlertCategoryCharacteristic")
+        print("\tValue:", "\t", val_list)
+        self.status.append("read")
         return val_list
 
 
 class AlertNotificationControlPointCharacteristic(Characteristic):
     def __init__(self, bus, index, service):
         Characteristic.__init__(
-            self, bus, index,
-            CHAR_UUIDS['ALERT_NOTIF_UUID'],
-            ['read', 'write'],
-            service)
+            self, bus, index, CHAR_UUIDS["ALERT_NOTIF_UUID"], ["read", "write"], service
+        )
         self.value = [dbus.Byte(0)]
         self.status = []
 
@@ -332,35 +331,45 @@ class AlertNotificationControlPointCharacteristic(Characteristic):
         val_list = []
         for val in self.value:
             val_list.append(dbus.Byte(val))
-        print('Read Request received\n', '\tAlertNotificationControlPointCharacteristic')
-        print('\tValue:', '\t', val_list)
-        self.status.append('read')
+        print(
+            "Read Request received\n", "\tAlertNotificationControlPointCharacteristic"
+        )
+        print("\tValue:", "\t", val_list)
+        self.status.append("read")
         return val_list
 
     def WriteValue(self, value, options):
-        print('Write Request received\n', '\tAlertNotificationControlPointCharacteristic')
-        print('\tCurrent value:', '\t', self.value)
+        print(
+            "Write Request received\n", "\tAlertNotificationControlPointCharacteristic"
+        )
+        print("\tCurrent value:", "\t", self.value)
         val_list = []
         for val in value:
             val_list.append(val)
         self.value = val_list
-        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': self.value}, [])
+        self.PropertiesChanged(GATT_CHRC_IFACE, {"Value": self.value}, [])
         # Check if new value is written
-        print('\tNew value:', '\t', self.value)
+        print("\tNew value:", "\t", self.value)
         if not self.value == value:
-            print('Failed: Write Request\n\tNew value not written\tCurrent value:', self.value)
-        self.status.append('write')
+            print(
+                "Failed: Write Request\n\tNew value not written\tCurrent value:",
+                self.value,
+            )
+        self.status.append("write")
 
 
 class UnreadAlertStatusCharacteristic(Characteristic):
     def __init__(self, bus, index, service):
         Characteristic.__init__(
-            self, bus, index,
-            CHAR_UUIDS['UNREAD_ALERT_STATUS_UUID'],
-            ['read', 'write', 'notify'],
-            service)
+            self,
+            bus,
+            index,
+            CHAR_UUIDS["UNREAD_ALERT_STATUS_UUID"],
+            ["read", "write", "notify"],
+            service,
+        )
         self.value = [dbus.Byte(0)]
-        self.cccd_obj = ClientCharacteristicConfigurationDescriptor(bus, '0001', self)
+        self.cccd_obj = ClientCharacteristicConfigurationDescriptor(bus, "0001", self)
         self.add_descriptor(self.cccd_obj)
         self.notifying = False
         self.status = []
@@ -368,30 +377,30 @@ class UnreadAlertStatusCharacteristic(Characteristic):
     def StartNotify(self):
         try:
             if self.notifying:
-                print('\nAlready notifying, nothing to do')
+                print("\nAlready notifying, nothing to do")
                 return
-            print('Notify Started')
+            print("Notify Started")
             self.notifying = True
             self.ReadValue()
             self.WriteValue([dbus.Byte(1), dbus.Byte(0)])
-            self.status.append('notify')
+            self.status.append("notify")
 
         except Exception as e:
             print(e)
 
     def StopNotify(self):
         if not self.notifying:
-            print('\nNot notifying, nothing to do')
+            print("\nNot notifying, nothing to do")
             return
         self.notifying = False
-        print('\nNotify Stopped')
+        print("\nNotify Stopped")
 
     def ReadValue(self, options=None):
         val_list = []
         for val in self.value:
             val_list.append(dbus.Byte(val))
-        self.status.append('read')
-        print('\tValue:', '\t', val_list)
+        self.status.append("read")
+        print("\tValue:", "\t", val_list)
         return val_list
 
     def WriteValue(self, value, options=None):
@@ -399,22 +408,28 @@ class UnreadAlertStatusCharacteristic(Characteristic):
         for val in value:
             val_list.append(val)
         self.value = val_list
-        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': self.value}, [])
+        self.PropertiesChanged(GATT_CHRC_IFACE, {"Value": self.value}, [])
         # Check if new value is written
         if not self.value == value:
-            print('Failed: Write Request\n\tNew value not written\tCurrent value:', self.value)
-        print('New value:', '\t', self.value)
-        self.status.append('write')
+            print(
+                "Failed: Write Request\n\tNew value not written\tCurrent value:",
+                self.value,
+            )
+        print("New value:", "\t", self.value)
+        self.status.append("write")
 
 
 class ClientCharacteristicConfigurationDescriptor(Descriptor):
     def __init__(self, bus, index, characteristic):
         self.value = [dbus.Byte(1)]
         Descriptor.__init__(
-            self, bus, index,
-            DESCR_UUIDS['CCCD_UUID'],
-            ['read', 'write'],
-            characteristic)
+            self,
+            bus,
+            index,
+            DESCR_UUIDS["CCCD_UUID"],
+            ["read", "write"],
+            characteristic,
+        )
 
     def ReadValue(self, options=None):
         return self.value
@@ -424,7 +439,10 @@ class ClientCharacteristicConfigurationDescriptor(Descriptor):
         for val in value:
             val_list.append(val)
         self.value = val_list
-        self.PropertiesChanged(GATT_DESC_IFACE, {'Value': self.value}, [])
+        self.PropertiesChanged(GATT_DESC_IFACE, {"Value": self.value}, [])
         # Check if new value is written
         if not self.value == value:
-            print('Failed: Write Request\n\tNew value not written\tCurrent value:', self.value)
+            print(
+                "Failed: Write Request\n\tNew value not written\tCurrent value:",
+                self.value,
+            )

@@ -5,9 +5,7 @@
 import collections
 import os
 
-from pyparsing import ParseException
-from pyparsing import Suppress
-from pyparsing import White
+from pyparsing import ParseException, Suppress, White
 
 from .fragments import Fragment
 from .generation import GenerationException
@@ -22,8 +20,8 @@ class LinkerScript:
     The <target> is where output commands (see output_commands.py) are placed.
     """
 
-    MappingMarker = collections.namedtuple('MappingMarker', 'target indent rules')
-    ArraysMarker = collections.namedtuple('ArraysMarker', 'target indent rules')
+    MappingMarker = collections.namedtuple("MappingMarker", "target indent rules")
+    ArraysMarker = collections.namedtuple("ArraysMarker", "target indent rules")
 
     def __init__(self, template_file):
         self.members = []
@@ -35,8 +33,12 @@ class LinkerScript:
         lines = template_file.readlines()
 
         target = Fragment.IDENTIFIER
-        pattern_mapping = White(' \t') + Suppress('mapping') + Suppress('[') + target + Suppress(']')
-        pattern_arrays = White(' \t') + Suppress('arrays') + Suppress('[') + target + Suppress(']')
+        pattern_mapping = (
+            White(" \t") + Suppress("mapping") + Suppress("[") + target + Suppress("]")
+        )
+        pattern_arrays = (
+            White(" \t") + Suppress("arrays") + Suppress("[") + target + Suppress("]")
+        )
 
         # Find the markers in the template file line by line. If line does not match marker grammar,
         # set it as a literal to be copied as is to the output file.
@@ -69,17 +71,22 @@ class LinkerScript:
                     rules = [x for x in mapping_rules[target] if not x.tied]
                 member.rules.extend(rules)
             except KeyError:
-                message = GenerationException.UNDEFINED_REFERENCE + " to target '" + target + "'."
+                message = (
+                    GenerationException.UNDEFINED_REFERENCE
+                    + " to target '"
+                    + target
+                    + "'."
+                )
                 raise GenerationException(message)
             except AttributeError:
                 pass
 
     def write(self, output_file):
         # Add information that this is a generated file.
-        output_file.write('/* Automatically generated file; DO NOT EDIT */\n')
-        output_file.write('/* Espressif IoT Development Framework Linker Script */\n')
-        output_file.write('/* Generated from: %s */\n' % self.file)
-        output_file.write('\n')
+        output_file.write("/* Automatically generated file; DO NOT EDIT */\n")
+        output_file.write("/* Espressif IoT Development Framework Linker Script */\n")
+        output_file.write("/* Generated from: %s */\n" % self.file)
+        output_file.write("\n")
 
         # Do the text replacement
         for member in self.members:
@@ -88,7 +95,7 @@ class LinkerScript:
                 rules = member.rules
 
                 for rule in rules:
-                    generated_line = ''.join([indent, str(rule), '\n'])
+                    generated_line = "".join([indent, str(rule), "\n"])
                     output_file.write(generated_line)
             except AttributeError:
                 output_file.write(member)

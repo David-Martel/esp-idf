@@ -24,9 +24,10 @@ class FAT:
     def __init__(self, boot_sector_state: BootSectorState, init_: bool) -> None:
         self._first_free_cluster_id = 1
         self.boot_sector_state = boot_sector_state
-        self.clusters: List[Cluster] = [Cluster(cluster_id=i,
-                                                boot_sector_state=self.boot_sector_state,
-                                                init_=init_) for i in range(self.boot_sector_state.clusters)]
+        self.clusters: List[Cluster] = [
+            Cluster(cluster_id=i, boot_sector_state=self.boot_sector_state, init_=init_)
+            for i in range(self.boot_sector_state.clusters)
+        ]
         if init_:
             self.allocate_root_dir()
 
@@ -51,7 +52,9 @@ class FAT:
         is_cluster_last_: bool = value_ == (1 << self.boot_sector_state.fatfs_type) - 1
         return is_cluster_last_
 
-    def get_chained_content(self, cluster_id_: int, size: Optional[int] = None) -> bytearray:
+    def get_chained_content(
+        self, cluster_id_: int, size: Optional[int] = None
+    ) -> bytearray:
         """
         The purpose of the method is retrieving the content from chain of clusters when the FAT FS partition
         is analyzed. The file entry provides the reference to the first cluster, this method
@@ -59,13 +62,21 @@ class FAT:
         """
         binary_image: bytearray = self.boot_sector_state.binary_image
 
-        data_address_ = Cluster.compute_cluster_data_address(self.boot_sector_state, cluster_id_)
-        content_ = binary_image[data_address_: data_address_ + self.boot_sector_state.sector_size]
+        data_address_ = Cluster.compute_cluster_data_address(
+            self.boot_sector_state, cluster_id_
+        )
+        content_ = binary_image[
+            data_address_ : data_address_ + self.boot_sector_state.sector_size
+        ]
 
         while not self.is_cluster_last(cluster_id_):
             cluster_id_ = self.get_cluster_value(cluster_id_)
-            data_address_ = Cluster.compute_cluster_data_address(self.boot_sector_state, cluster_id_)
-            content_ += binary_image[data_address_: data_address_ + self.boot_sector_state.sector_size]
+            data_address_ = Cluster.compute_cluster_data_address(
+                self.boot_sector_state, cluster_id_
+            )
+            content_ += binary_image[
+                data_address_ : data_address_ + self.boot_sector_state.sector_size
+            ]
         # the size is None if the object is directory
         if size is None:
             return content_
@@ -80,10 +91,10 @@ class FAT:
         """
 
         if self._first_free_cluster_id + 1 >= len(self.clusters):
-            raise NoFreeClusterException('No free cluster available!')
+            raise NoFreeClusterException("No free cluster available!")
         cluster = self.clusters[self._first_free_cluster_id + 1]
         if not cluster.is_empty:
-            raise NoFreeClusterException('No free cluster available!')
+            raise NoFreeClusterException("No free cluster available!")
         cluster.allocate_cluster()
         self._first_free_cluster_id += 1
         return cluster

@@ -21,9 +21,9 @@ def test_wifi_unit_test(dut: Dut) -> None:
 @pytest.mark.xtal_26mhz
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config, baud',
+    "config, baud",
     [
-        ('esp32c2_xtal26m', '74880'),
+        ("esp32c2_xtal26m", "74880"),
     ],
     indirect=True,
 )

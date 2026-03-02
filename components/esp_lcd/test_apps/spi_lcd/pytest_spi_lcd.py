@@ -7,9 +7,9 @@ from pytest_embedded import Dut
 @pytest.mark.supported_targets
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release',
+        "release",
     ],
     indirect=True,
 )

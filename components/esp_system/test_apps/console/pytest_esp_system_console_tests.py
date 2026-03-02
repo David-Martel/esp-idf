@@ -11,7 +11,7 @@ def not_expect(dut: Dut, output_regex: str) -> None:
     except pexpect.TIMEOUT:
         pass
     else:
-        raise RuntimeError(f'Found not_expect output {output_regex}')
+        raise RuntimeError(f"Found not_expect output {output_regex}")
 
 
 JTAG_SERIAL_MARKS = [
@@ -25,59 +25,69 @@ JTAG_SERIAL_MARKS = [
 
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        pytest.param('console_none', marks=pytest.mark.supported_targets),
+        pytest.param("console_none", marks=pytest.mark.supported_targets),
     ],
-    indirect=True
+    indirect=True,
 )
 def test_esp_system_console_no_output_uart(dut: Dut) -> None:
-    not_expect(dut, r'2nd stage bootloader|Hello World')
-    dut.expect('This message will be printed even with CONFIG_ESP_CONSOLE_NONE')
+    not_expect(dut, r"2nd stage bootloader|Hello World")
+    dut.expect("This message will be printed even with CONFIG_ESP_CONSOLE_NONE")
 
 
 @pytest.mark.usb_serial_jtag
 @pytest.mark.parametrize(
-    'port, flash_port, config',
+    "port, flash_port, config",
     [
-        pytest.param('/dev/serial_ports/ttyACM-esp32', '/dev/serial_ports/ttyUSB-esp32', 'serial_jtag_only', marks=JTAG_SERIAL_MARKS),
+        pytest.param(
+            "/dev/serial_ports/ttyACM-esp32",
+            "/dev/serial_ports/ttyUSB-esp32",
+            "serial_jtag_only",
+            marks=JTAG_SERIAL_MARKS,
+        ),
     ],
     indirect=True,
 )
 def test_esp_system_console_only_serial_jtag(dut: Dut) -> None:
-    dut.expect('2nd stage bootloader')
-    dut.expect('Hello World')
-    dut.expect('Opening /dev/console')
-    dut.expect('This should be printed to stdout')
-    dut.expect('Closing /dev/console')
-    dut.expect('This should be printed to stdout')
+    dut.expect("2nd stage bootloader")
+    dut.expect("Hello World")
+    dut.expect("Opening /dev/console")
+    dut.expect("This should be printed to stdout")
+    dut.expect("Closing /dev/console")
+    dut.expect("This should be printed to stdout")
 
 
 @pytest.mark.usb_serial_jtag
 @pytest.mark.parametrize(
-    'port, flash_port, config',
+    "port, flash_port, config",
     [
-        pytest.param('/dev/serial_ports/ttyACM-esp32', '/dev/serial_ports/ttyUSB-esp32', 'serial_jtag_only_no_vfs', marks=JTAG_SERIAL_MARKS),
+        pytest.param(
+            "/dev/serial_ports/ttyACM-esp32",
+            "/dev/serial_ports/ttyUSB-esp32",
+            "serial_jtag_only_no_vfs",
+            marks=JTAG_SERIAL_MARKS,
+        ),
     ],
     indirect=True,
 )
 def test_esp_system_console_only_serial_jtag_no_vfs(dut: Dut) -> None:
-    dut.expect('2nd stage bootloader')
-    dut.expect('Hello World')
+    dut.expect("2nd stage bootloader")
+    dut.expect("Hello World")
 
 
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        pytest.param('simple', marks=pytest.mark.supported_targets),
+        pytest.param("simple", marks=pytest.mark.supported_targets),
     ],
-    indirect=True
+    indirect=True,
 )
 def test_esp_system_console_correct_open_and_close(dut: Dut) -> None:
-    dut.expect('2nd stage bootloader')
-    dut.expect('Hello World')
-    dut.expect('Opening /dev/console')
-    dut.expect('This should be printed to stdout')
-    dut.expect('Closing /dev/console')
-    dut.expect('This should be printed to stdout')
+    dut.expect("2nd stage bootloader")
+    dut.expect("Hello World")
+    dut.expect("Opening /dev/console")
+    dut.expect("This should be printed to stdout")
+    dut.expect("Closing /dev/console")
+    dut.expect("This should be printed to stdout")

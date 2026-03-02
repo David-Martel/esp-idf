@@ -19,22 +19,22 @@
 
 <script>
 export default {
-  data() {
-    return {
-      version: null,
-      cores: null
-    };
-  },
-  mounted() {
-    this.$ajax
-      .get("/api/v1/system/info")
-      .then(data => {
-        this.version = data.data.version;
-        this.cores = data.data.cores;
-      })
-      .catch(error => {
-        console.log(error);
-      });
-  }
+	data() {
+		return {
+			version: null,
+			cores: null,
+		};
+	},
+	mounted() {
+		this.$ajax
+			.get("/api/v1/system/info")
+			.then((data) => {
+				this.version = data.data.version;
+				this.cores = data.data.cores;
+			})
+			.catch((error) => {
+				console.log(error);
+			});
+	},
 };
 </script>

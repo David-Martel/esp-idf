@@ -27,18 +27,17 @@ except ImportError:
     from ldgen.output_commands import AlignAtAddress, InputSectionDesc, SymbolAtAddress
     from ldgen.sdkconfig import SDKConfig
 
-ROOT = Entity('*')
+ROOT = Entity("*")
 
-FREERTOS = Entity('libfreertos.a')
-CROUTINE = Entity('libfreertos.a', 'croutine')
-TIMERS = Entity('libfreertos.a', 'timers')
-TEMPERATURE_SENSOR_PERIPH = Entity('libsoc.a', 'temperature_sensor_periph')
+FREERTOS = Entity("libfreertos.a")
+CROUTINE = Entity("libfreertos.a", "croutine")
+TIMERS = Entity("libfreertos.a", "timers")
+TEMPERATURE_SENSOR_PERIPH = Entity("libsoc.a", "temperature_sensor_periph")
 
-FREERTOS2 = Entity('libfreertos2.a')
+FREERTOS2 = Entity("libfreertos2.a")
 
 
 class GenerationTest(unittest.TestCase):
-
     def setUp(self):
         self.generation = Generation()
         self.entities = None
@@ -48,38 +47,42 @@ class GenerationTest(unittest.TestCase):
             self.kconfigs_source_file = os.path.join(tempfile.gettempdir(), f.name)
             self.addCleanup(os.remove, self.kconfigs_source_file)
         with tempfile.NamedTemporaryFile(delete=False) as f:
-            self.kconfig_projbuilds_source_file = os.path.join(tempfile.gettempdir(), f.name)
+            self.kconfig_projbuilds_source_file = os.path.join(
+                tempfile.gettempdir(), f.name
+            )
             self.addCleanup(os.remove, self.kconfig_projbuilds_source_file)
 
-        os.environ['COMPONENT_KCONFIGS_SOURCE_FILE'] = self.kconfigs_source_file
-        os.environ['COMPONENT_KCONFIGS_PROJBUILD_SOURCE_FILE'] = self.kconfig_projbuilds_source_file
-        os.environ['COMPONENT_KCONFIGS'] = ''
-        os.environ['COMPONENT_KCONFIGS_PROJBUILD'] = ''
+        os.environ["COMPONENT_KCONFIGS_SOURCE_FILE"] = self.kconfigs_source_file
+        os.environ["COMPONENT_KCONFIGS_PROJBUILD_SOURCE_FILE"] = (
+            self.kconfig_projbuilds_source_file
+        )
+        os.environ["COMPONENT_KCONFIGS"] = ""
+        os.environ["COMPONENT_KCONFIGS_PROJBUILD"] = ""
 
         # prepare_kconfig_files.py doesn't have to be called because COMPONENT_KCONFIGS and
         # COMPONENT_KCONFIGS_PROJBUILD are empty
 
-        self.sdkconfig = SDKConfig('data/Kconfig', 'data/sdkconfig')
+        self.sdkconfig = SDKConfig("data/Kconfig", "data/sdkconfig")
 
-        fragment_file = parse_fragment_file('data/base.lf', self.sdkconfig)
+        fragment_file = parse_fragment_file("data/base.lf", self.sdkconfig)
         self.generation.add_fragments_from_file(fragment_file)
 
         self.entities = EntityDB()
 
-        with open('data/libfreertos.a.txt') as objdump:
+        with open("data/libfreertos.a.txt") as objdump:
             self.entities.add_sections_info(objdump)
 
-        with open('data/libsoc.a.txt') as objdump:
+        with open("data/libsoc.a.txt") as objdump:
             self.entities.add_sections_info(objdump)
 
-        with open('data/linker_script.ld') as linker_script:
+        with open("data/linker_script.ld") as linker_script:
             self.linker_script_expect = LinkerScript(linker_script)
 
-        with open('data/linker_script.ld') as linker_script:
+        with open("data/linker_script.ld") as linker_script:
             self.linker_script_actual = LinkerScript(linker_script)
 
     @staticmethod
-    def create_fragment_file(contents, name='test_fragment.lf'):
+    def create_fragment_file(contents, name="test_fragment.lf"):
         f = StringIO(contents)
         f.name = name
         return f
@@ -91,25 +94,31 @@ class GenerationTest(unittest.TestCase):
 
     def write(self, expected, actual):
         self.linker_script_expect.fill(expected)
-        self.linker_script_expect.write(open('expected.ld', 'w'))
+        self.linker_script_expect.write(open("expected.ld", "w"))
 
         self.linker_script_actual.fill(actual)
-        self.linker_script_actual.write(open('actual.ld', 'w'))
+        self.linker_script_actual.write(open("actual.ld", "w"))
 
     def generate_default_rules(self):
         rules = collections.defaultdict(list)
 
-        rules['dram0_bss'].append(InputSectionDesc(ROOT, ['.bss', '.bss.*'], []))
-        rules['dram0_bss'].append(InputSectionDesc(ROOT, ['COMMON'], []))
-        rules['dram0_data'].append(InputSectionDesc(ROOT, ['.data', '.data.*'], []))
-        rules['dram0_data'].append(InputSectionDesc(ROOT, ['.dram', '.dram.*'], []))
-        rules['flash_text'].append(InputSectionDesc(ROOT, ['.literal', '.literal.*', '.text', '.text.*'], []))
-        rules['flash_rodata'].append(InputSectionDesc(ROOT, ['.rodata', '.rodata.*'], []))
-        rules['iram0_text'].append(InputSectionDesc(ROOT, ['.iram', '.iram.*'], []))
-        rules['rtc_bss'].append(InputSectionDesc(ROOT, ['.rtc.bss'], []))
-        rules['rtc_data'].append(InputSectionDesc(ROOT, ['.rtc.data'], []))
-        rules['rtc_data'].append(InputSectionDesc(ROOT, ['.rtc.rodata'], []))
-        rules['rtc_text'].append(InputSectionDesc(ROOT, ['.rtc.text', '.rtc.literal'], []))
+        rules["dram0_bss"].append(InputSectionDesc(ROOT, [".bss", ".bss.*"], []))
+        rules["dram0_bss"].append(InputSectionDesc(ROOT, ["COMMON"], []))
+        rules["dram0_data"].append(InputSectionDesc(ROOT, [".data", ".data.*"], []))
+        rules["dram0_data"].append(InputSectionDesc(ROOT, [".dram", ".dram.*"], []))
+        rules["flash_text"].append(
+            InputSectionDesc(ROOT, [".literal", ".literal.*", ".text", ".text.*"], [])
+        )
+        rules["flash_rodata"].append(
+            InputSectionDesc(ROOT, [".rodata", ".rodata.*"], [])
+        )
+        rules["iram0_text"].append(InputSectionDesc(ROOT, [".iram", ".iram.*"], []))
+        rules["rtc_bss"].append(InputSectionDesc(ROOT, [".rtc.bss"], []))
+        rules["rtc_data"].append(InputSectionDesc(ROOT, [".rtc.data"], []))
+        rules["rtc_data"].append(InputSectionDesc(ROOT, [".rtc.rodata"], []))
+        rules["rtc_text"].append(
+            InputSectionDesc(ROOT, [".rtc.text", ".rtc.literal"], [])
+        )
 
         return rules
 
@@ -121,7 +130,6 @@ class GenerationTest(unittest.TestCase):
 
 
 class DefaultMappingTest(GenerationTest):
-
     def test_rule_generation_default(self):
         # Checks that default rules are generated from
         # the default scheme properly and even if no mappings
@@ -134,7 +142,7 @@ class DefaultMappingTest(GenerationTest):
     def test_default_mapping_lib(self):
         # Mapping a library with default mapping. This should not emit additional rules,
         # other than the default ones.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -146,7 +154,7 @@ entries:
     def test_default_mapping_obj(self):
         # Mapping an object with default mapping. This should not emit additional rules,
         # other than the default ones.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -158,7 +166,7 @@ entries:
     def test_default_mapping_symbol(self):
         # Mapping a symbol with default mapping. This should not emit additional rules,
         # other than the default ones.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -170,7 +178,7 @@ entries:
     def test_default_mapping_all(self):
         # Mapping a library, object, and symbol with default mapping. This should not emit additional rules,
         # other than the default ones.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -187,7 +195,7 @@ entries:
         #
         # This is a check needed to make sure generation does not generate
         # intermediate commands due to presence of symbol mapping.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -203,7 +211,7 @@ entries:
         #
         # This is a check needed to make sure generation does not generate
         # intermediate commands due to presence of symbol mapping.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -230,7 +238,7 @@ class BasicTest(GenerationTest):
         # iram0_text
         #   *(.iram ...)
         #   *libfreertos.a(.literal  ...)                                                                          B
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -240,10 +248,10 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        flash_rodata = expected['flash_rodata']
-        iram0_text = expected['iram0_text']
-        dram0_data = expected['dram0_data']
+        flash_text = expected["flash_text"]
+        flash_rodata = expected["flash_rodata"]
+        iram0_text = expected["iram0_text"]
+        dram0_data = expected["dram0_data"]
 
         # Generate exclusions in flash_text and flash_rodata                                                 A
         flash_text[0].exclusions.add(FREERTOS)
@@ -267,7 +275,7 @@ entries:
         # iram0_text
         #   *(.iram ...)
         #   *libfreertos.a:croutine(.literal  ...)                                                                          B
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -278,10 +286,10 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        flash_rodata = expected['flash_rodata']
-        iram0_text = expected['iram0_text']
-        dram0_data = expected['dram0_data']
+        flash_text = expected["flash_text"]
+        flash_rodata = expected["flash_rodata"]
+        iram0_text = expected["iram0_text"]
+        dram0_data = expected["dram0_data"]
 
         # Generate exclusions in flash_text and flash_rodata                                                A
         flash_text[0].exclusions.add(CROUTINE)
@@ -307,7 +315,7 @@ entries:
         # iram0_text
         #   *(.iram ...)
         #   *libfreertos.a:croutine(.text.prvCheckPendingReadyList .literal.prvCheckPendingReadyList)                       C
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -317,8 +325,8 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        iram0_text = expected['iram0_text']
+        flash_text = expected["flash_text"]
+        iram0_text = expected["iram0_text"]
 
         # Generate exclusion in flash_text                                                A
         flash_text[0].exclusions.add(CROUTINE)
@@ -326,17 +334,30 @@ entries:
         # Generate intermediate command                                                   B
         # List all relevant sections except the symbol
         # being mapped
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections.append('.text')
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections.append(".text")
 
         flash_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), []))
 
         # Input section commands in iram_text for #1                                     C
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
@@ -358,7 +379,7 @@ entries:
         #
         # dram0_data
         #   *libsoc.a:temperature_sensor_periph.*(.rodata.temperature_sensor_attribute)                                     B
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libsoc.a
 entries:
@@ -369,16 +390,20 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_rodata = expected['flash_rodata']
-        dram0_data = expected['dram0_data']
+        flash_rodata = expected["flash_rodata"]
+        dram0_data = expected["dram0_data"]
 
         # Generate exclusion in flash_text                                               A
         flash_rodata[0].exclusions.add(TEMPERATURE_SENSOR_PERIPH)
 
         # Input section commands in dram0_data for #1                                    B
-        dram0_data.append(InputSectionDesc(TEMPERATURE_SENSOR_PERIPH,
-                                           set(['.rodata.temperature_sensor_attributes']),
-                                           []))
+        dram0_data.append(
+            InputSectionDesc(
+                TEMPERATURE_SENSOR_PERIPH,
+                set([".rodata.temperature_sensor_attributes"]),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
@@ -403,7 +428,7 @@ entries:
         #  libfreertos.a ( .rodata ...)                                                                     C.2
         #
         # Only default commands are in the other targets.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -415,10 +440,10 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        flash_rodata = expected['flash_rodata']
-        iram0_text = expected['iram0_text']
-        dram0_data = expected['dram0_data']
+        flash_text = expected["flash_text"]
+        flash_rodata = expected["flash_rodata"]
+        iram0_text = expected["iram0_text"]
+        dram0_data = expected["dram0_data"]
 
         # Exclusions for #1                                                                                 A
         flash_text[0].exclusions.add(FREERTOS)
@@ -426,21 +451,36 @@ entries:
 
         # Commands for #1                                                                                   C.1 & C.2
         # C.1 excludes intermediate command for #2
-        iram0_text.append(InputSectionDesc(FREERTOS, flash_text[0].sections, [CROUTINE]))
+        iram0_text.append(
+            InputSectionDesc(FREERTOS, flash_text[0].sections, [CROUTINE])
+        )
         dram0_data.append(InputSectionDesc(FREERTOS, flash_rodata[0].sections, []))
 
         # Intermediate command for excluding #2                                                             D
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections.append('.text')
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections.append(".text")
 
         iram0_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), []))
 
         # Command for #2                                                                                    B
-        flash_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        flash_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
@@ -465,7 +505,7 @@ entries:
         #   *libfreertos.a:croutine(.rodata ....)                                                                    C.2
         #
         # Only default commands are in the other targets
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -476,10 +516,10 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        flash_rodata = expected['flash_rodata']
-        iram0_text = expected['iram0_text']
-        dram0_data = expected['dram0_data']
+        flash_text = expected["flash_text"]
+        flash_rodata = expected["flash_rodata"]
+        iram0_text = expected["iram0_text"]
+        dram0_data = expected["dram0_data"]
 
         # Exclusions for #1                                                                                 A
         flash_text[0].exclusions.add(CROUTINE)
@@ -488,18 +528,31 @@ entries:
         # Commands for #1                                                                                   C.1 & C.2
         # C.1 list relevant sections for libfreertos.a:croutine to
         # exclude symbol to map
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections.append('.text')
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections.append(".text")
 
         iram0_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), []))
         dram0_data.append(InputSectionDesc(CROUTINE, flash_rodata[0].sections, []))
 
         # Command for #2                                                                                    B
-        flash_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        flash_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
@@ -532,7 +585,7 @@ entries:
         #  libfreertos.a (EXCLUDE_FILE(libfreertos:croutine) .rodata ...)                                    C
         #
         # For the other targets only the default commands should be present.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -545,10 +598,10 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        flash_rodata = expected['flash_rodata']
-        iram0_text = expected['iram0_text']
-        dram0_data = expected['dram0_data']
+        flash_text = expected["flash_text"]
+        flash_rodata = expected["flash_rodata"]
+        iram0_text = expected["iram0_text"]
+        dram0_data = expected["dram0_data"]
 
         # Exclusions for #1                                                                                 A
         # Only for flash_text and flash_rodata
@@ -557,32 +610,49 @@ entries:
 
         # Commands for #1                                                                                   C
         # with exclusions for #2
-        iram0_text.append(InputSectionDesc(FREERTOS, flash_text[0].sections, [CROUTINE]))
-        dram0_data.append(InputSectionDesc(FREERTOS, flash_rodata[0].sections, [CROUTINE]))
+        iram0_text.append(
+            InputSectionDesc(FREERTOS, flash_text[0].sections, [CROUTINE])
+        )
+        dram0_data.append(
+            InputSectionDesc(FREERTOS, flash_rodata[0].sections, [CROUTINE])
+        )
 
         # Commands for #2                                                                                   B.1
         flash_rodata.append(InputSectionDesc(CROUTINE, flash_rodata[0].sections, []))
 
         # List all relevant sections in case of flash_text                                                  B.2
         # as exclusion for #3
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections.append('.text')
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections.append(".text")
 
         flash_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), []))
 
         # Command for #3                                                                                    D
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
     def test_nondefault_but_same_lib_and_obj(self):
         # Extension of DefaultMappingTest. Commands should not be generated for #2, since it does similar mapping
         # to #1. Output is similar to test_different_mapping_lib.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -594,7 +664,7 @@ entries:
     def test_nondefault_but_same_lib_and_sym(self):
         # Extension of DefaultMappingTest. Commands should not be generated for #2, since it does similar mapping
         # to #1. Output is similar to test_different_mapping_lib.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -606,7 +676,7 @@ entries:
     def test_nondefault_but_same_obj_and_sym(self):
         # Commands should not be generated for #2, since it does similar mapping
         # to #1. Output is similar to test_different_mapping_obj.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -627,7 +697,7 @@ entries:
         # iram0_text
         #
         #
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -639,8 +709,8 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        iram0_text = expected['iram0_text']
+        flash_text = expected["flash_text"]
+        iram0_text = expected["iram0_text"]
 
         # Exclusions for #1 & #2 intermediate command                                       A
         flash_text[0].exclusions.add(CROUTINE)
@@ -648,19 +718,40 @@ entries:
         # Intermediate command for #1 & #2 which lists                                      B
         # all relevant sections in croutine except prvCheckPendingReadyList
         # and prvCheckDelayedList
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckDelayedList')]
-        filtered_sections.append('.text')
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckDelayedList")
+        ]
+        filtered_sections.append(".text")
 
         flash_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), []))
 
         # Commands for #1 & 2
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckDelayedList', '.literal.prvCheckDelayedList']), []))
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set([".text.prvCheckDelayedList", ".literal.prvCheckDelayedList"]),
+                [],
+            )
+        )
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
@@ -671,7 +762,7 @@ entries:
         # iram0_text
         #   * (.custom_section)                                  A
         #   * (.iram .iram.*)
-        mapping = u"""
+        mapping = """
 [sections:custom_section]
 entries:
     .custom_section
@@ -693,14 +784,13 @@ entries:
         # Generate default command                              A
         # Since these are the same 'specificity', the commands
         # are arranged alphabetically.
-        expected['iram0_text'].append(expected['iram0_text'][0])
-        expected['iram0_text'][0] = InputSectionDesc(ROOT, ['.custom_section'], [])
+        expected["iram0_text"].append(expected["iram0_text"][0])
+        expected["iram0_text"][0] = InputSectionDesc(ROOT, [".custom_section"], [])
 
         self.compare_rules(expected, actual)
 
 
 class AdvancedTest(GenerationTest):
-
     # Test valid but quirky cases, corner cases, failure cases, and
     # cases involving interaction between schemes, other mapping
     # fragments.
@@ -727,7 +817,7 @@ class AdvancedTest(GenerationTest):
         #   *(.data ..)
         #   *(.dram ...)
         #   *libfreertos.a:croutine(.rodata .rodata.*)                                                               D
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -738,10 +828,10 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        flash_rodata = expected['flash_rodata']
-        iram0_text = expected['iram0_text']
-        dram0_data = expected['dram0_data']
+        flash_text = expected["flash_text"]
+        flash_rodata = expected["flash_rodata"]
+        iram0_text = expected["iram0_text"]
+        dram0_data = expected["dram0_data"]
 
         # Exclusions for #1                                                                 A
         flash_text[0].exclusions.add(CROUTINE)
@@ -781,7 +871,7 @@ entries:
         #   *(.data ..)
         #   *(.dram ...)
         #   *libfreertos.a:croutine(.rodata .rodata.*)                                                               D
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -792,10 +882,10 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        flash_rodata = expected['flash_rodata']
-        iram0_text = expected['iram0_text']
-        dram0_data = expected['dram0_data']
+        flash_text = expected["flash_text"]
+        flash_rodata = expected["flash_rodata"]
+        iram0_text = expected["iram0_text"]
+        dram0_data = expected["dram0_data"]
 
         # Exclusions for #1                                                                 A
         flash_text[0].exclusions.add(CROUTINE)
@@ -818,7 +908,7 @@ entries:
         # noflash = text -> iram0_text, rodata -> dram0_data
         #
         # This operation should fail.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -837,7 +927,7 @@ entries:
         # noflash = .text -> iram0_text, .rodata -> dram0_data
         #
         # This operation should fail.
-        mapping = u"""
+        mapping = """
 [sections:custom_text]
 entries:
     .text+
@@ -896,7 +986,7 @@ entries:
         #   *(rtc.bss .rtc.bss)
         #   libfreertos.a:timers (.bss .bss.*)                                                                                            D
         #   libfreertos.a:timers (COMMON)                                                                                                 D
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -910,14 +1000,14 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        flash_rodata = expected['flash_rodata']
-        dram0_data = expected['dram0_data']
-        iram0_text = expected['iram0_text']
-        dram0_bss = expected['dram0_bss']
-        rtc_text = expected['rtc_text']
-        rtc_data = expected['rtc_data']
-        rtc_bss = expected['rtc_bss']
+        flash_text = expected["flash_text"]
+        flash_rodata = expected["flash_rodata"]
+        dram0_data = expected["dram0_data"]
+        iram0_text = expected["iram0_text"]
+        dram0_bss = expected["dram0_bss"]
+        rtc_text = expected["rtc_text"]
+        rtc_data = expected["rtc_data"]
+        rtc_bss = expected["rtc_bss"]
 
         # Exclusions for #1                                                                 A
         flash_text[0].exclusions.add(CROUTINE)
@@ -932,42 +1022,72 @@ entries:
 
         # Commands for #1                                                                   C
         # List all relevant sections excluding #4 for text -> iram0_text
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections.append('.text')
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections.append(".text")
 
         iram0_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), []))
         dram0_data.append(InputSectionDesc(CROUTINE, flash_rodata[0].sections, []))
 
         # Commands for #4                                                                   F
         # Processed first due to alphabetical ordering
-        rtc_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        rtc_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         # Commands for #2                                                                   D
         # List all relevant sections excluding #3 for text -> rtc_text and                  D.2
         # rodata -> rtc_data
-        timers_sections = self.entities.get_sections('libfreertos.a', 'timers')
-        filtered_sections = fnmatch.filter(timers_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(timers_sections, '.text.*'))
+        timers_sections = self.entities.get_sections("libfreertos.a", "timers")
+        filtered_sections = fnmatch.filter(timers_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(timers_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvProcessReceivedCommands')]
-        filtered_sections.append('.text')
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvProcessReceivedCommands")
+        ]
+        filtered_sections.append(".text")
         rtc_text.append(InputSectionDesc(TIMERS, set(filtered_sections), []))
 
         rtc_data.append(InputSectionDesc(TIMERS, dram0_data[0].sections, []))
-        filtered_sections = fnmatch.filter(timers_sections, '.rodata.*')
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvProcessReceivedCommands')]
+        filtered_sections = fnmatch.filter(timers_sections, ".rodata.*")
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvProcessReceivedCommands")
+        ]
         rtc_data.append(InputSectionDesc(TIMERS, set(filtered_sections), []))
 
         rtc_bss.append(InputSectionDesc(TIMERS, dram0_bss[0].sections, []))
         rtc_bss.append(InputSectionDesc(TIMERS, dram0_bss[1].sections, []))
 
         # Commands for #3                                                                  E
-        iram0_text.append(InputSectionDesc(TIMERS, set(['.text.prvProcessReceivedCommands', '.literal.prvProcessReceivedCommands']), []))
-        dram0_data.append(InputSectionDesc(TIMERS, set(['.rodata.prvProcessReceivedCommands']), []))
+        iram0_text.append(
+            InputSectionDesc(
+                TIMERS,
+                set(
+                    [
+                        ".text.prvProcessReceivedCommands",
+                        ".literal.prvProcessReceivedCommands",
+                    ]
+                ),
+                [],
+            )
+        )
+        dram0_data.append(
+            InputSectionDesc(TIMERS, set([".rodata.prvProcessReceivedCommands"]), [])
+        )
 
         self.compare_rules(expected, actual)
 
@@ -983,7 +1103,7 @@ entries:
         #   * (EXCLUDE_FILE(libfreertos.a libfreertos.a:croutine) .text ...)
         #
         # iram0_text
-        mapping = u"""
+        mapping = """
 [mapping:test_1]
 archive: libfreertos.a
 entries:
@@ -999,10 +1119,10 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        flash_rodata = expected['flash_rodata']
-        iram0_text = expected['iram0_text']
-        dram0_data = expected['dram0_data']
+        flash_text = expected["flash_text"]
+        flash_rodata = expected["flash_rodata"]
+        iram0_text = expected["iram0_text"]
+        dram0_data = expected["dram0_data"]
 
         # Exclusions for #1                                                                 A
         flash_text[0].exclusions.add(CROUTINE)
@@ -1028,7 +1148,7 @@ entries:
         #
         # Uses the same entries as C_05 but spreads them across
         # two fragments. The output should still be the same.
-        mapping = u"""
+        mapping = """
 [mapping:test_1]
 archive: libfreertos.a
 entries:
@@ -1046,7 +1166,7 @@ entries:
     def test_mapping_same_lib_in_multiple_fragments_conflict(self):
         # Test mapping fragments operating on the same archive
         # with conflicting mappings.
-        mapping = u"""
+        mapping = """
 [mapping:test_1]
 archive: libfreertos.a
 entries:
@@ -1078,7 +1198,7 @@ entries:
         #   libfreertos:croutine(.text.prvCheckPendingReadyList .literal.prvCheckPendingReadyList)              G
         #   libfreertos2:croutine(.text .literal ...)                                                           D
         #   libfreertos2:croutine2(.text .literal ...)                                                          E
-        mapping = u"""
+        mapping = """
 [mapping:freertos2]
 archive: libfreertos2.a
 entries:
@@ -1096,37 +1216,66 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        iram0_text = expected['iram0_text']
+        flash_text = expected["flash_text"]
+        iram0_text = expected["iram0_text"]
 
         # Exclusions for #1                                                                 A
         flash_text[0].exclusions.add(CROUTINE)
-        flash_text[0].exclusions.add(Entity(FREERTOS2.archive, 'croutine2'))
-        flash_text[0].exclusions.add(Entity(FREERTOS2.archive, 'croutine'))
+        flash_text[0].exclusions.add(Entity(FREERTOS2.archive, "croutine2"))
+        flash_text[0].exclusions.add(Entity(FREERTOS2.archive, "croutine"))
 
         # Intermediate command for #3 and #4                                                B
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
 
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckDelayedList')]
-        filtered_sections.append('.text')
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckDelayedList")
+        ]
+        filtered_sections.append(".text")
         flash_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), []))
 
         # Command for
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckDelayedList', '.literal.prvCheckDelayedList']), []))
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set([".text.prvCheckDelayedList", ".literal.prvCheckDelayedList"]),
+                [],
+            )
+        )
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
-        iram0_text.append(InputSectionDesc(Entity(FREERTOS2.archive, 'croutine'), flash_text[0].sections, []))
-        iram0_text.append(InputSectionDesc(Entity(FREERTOS2.archive, 'croutine2'), flash_text[0].sections, []))
+        iram0_text.append(
+            InputSectionDesc(
+                Entity(FREERTOS2.archive, "croutine"), flash_text[0].sections, []
+            )
+        )
+        iram0_text.append(
+            InputSectionDesc(
+                Entity(FREERTOS2.archive, "croutine2"), flash_text[0].sections, []
+            )
+        )
 
         self.compare_rules(expected, actual)
 
     def test_ambigious_obj(self):
         # Command generation for ambiguous entry should fail.
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -1143,7 +1292,7 @@ entries:
         #
         # 'custom_scheme' entries conflict the 'default' scheme
         # entries.
-        mapping = u"""
+        mapping = """
 [scheme:custom_scheme]
 entries:
     flash_text -> iram0_text
@@ -1163,7 +1312,7 @@ entries:
         #
         # custom_scheme has the 'iram -> iram0_text' in common with
         # default scheme
-        mapping = u"""
+        mapping = """
 [sections:custom_section]
 entries:
     .custom_section
@@ -1186,8 +1335,8 @@ entries:
         # Generate default command                              A
         # Since these are the same 'specificity', the commands
         # are arranged alphabetically.
-        expected['iram0_text'].append(expected['iram0_text'][0])
-        expected['iram0_text'][0] = InputSectionDesc(ROOT, ['.custom_section'], [])
+        expected["iram0_text"].append(expected["iram0_text"][0])
+        expected["iram0_text"][0] = InputSectionDesc(ROOT, [".custom_section"], [])
 
         self.compare_rules(expected, actual)
 
@@ -1198,7 +1347,7 @@ class ConfigTest(GenerationTest):
     def _test_conditional_on_scheme(self, perf, alt=None):
         # Test that proper commands are generated if using
         # schemes with conditional entries.
-        scheme = u"""
+        scheme = """
 [sections:cond_text_data]
 entries:
     if PERFORMANCE_LEVEL >= 1:
@@ -1215,13 +1364,13 @@ entries:
         cond_text_data -> dram0_data
 """
 
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: lib.a
 entries:
     * (cond_noflash)
 """
-        self.sdkconfig.config.syms['PERFORMANCE_LEVEL'].set_value(str(perf))
+        self.sdkconfig.config.syms["PERFORMANCE_LEVEL"].set_value(str(perf))
         self.add_fragments(scheme)
         self.add_fragments(alt if alt else mapping)
 
@@ -1229,15 +1378,19 @@ entries:
         expected = self.generate_default_rules()
 
         if perf >= 1:
-            flash_text = expected['flash_text']
-            iram0_text = expected['iram0_text']
-            flash_text[0].exclusions.add(Entity('lib.a'))
-            iram0_text.append(InputSectionDesc(Entity('lib.a'), flash_text[0].sections, []))
+            flash_text = expected["flash_text"]
+            iram0_text = expected["iram0_text"]
+            flash_text[0].exclusions.add(Entity("lib.a"))
+            iram0_text.append(
+                InputSectionDesc(Entity("lib.a"), flash_text[0].sections, [])
+            )
         else:
-            flash_rodata = expected['flash_rodata']
-            dram0_data = expected['dram0_data']
-            flash_rodata[0].exclusions.add(Entity('lib.a'))
-            dram0_data.append(InputSectionDesc(Entity('lib.a'), flash_rodata[0].sections, []))
+            flash_rodata = expected["flash_rodata"]
+            dram0_data = expected["dram0_data"]
+            flash_rodata[0].exclusions.add(Entity("lib.a"))
+            dram0_data.append(
+                InputSectionDesc(Entity("lib.a"), flash_rodata[0].sections, [])
+            )
 
         self.compare_rules(expected, actual)
 
@@ -1250,7 +1403,7 @@ entries:
     def test_conditional_mapping(self, alt=None):
         # Test that proper commands are generated
         # in conditional mapping entries.
-        mapping = u"""
+        mapping = """
 [mapping:default]
 archive: *
 entries:
@@ -1271,7 +1424,7 @@ entries:
 """
 
         for perf_level in range(0, 4):
-            self.sdkconfig.config.syms['PERFORMANCE_LEVEL'].set_value(str(perf_level))
+            self.sdkconfig.config.syms["PERFORMANCE_LEVEL"].set_value(str(perf_level))
 
             self.generation.mappings = {}
             self.add_fragments(alt if alt else mapping)
@@ -1281,25 +1434,33 @@ entries:
 
             if perf_level < 4 and perf_level > 0:
                 for append_no in range(1, perf_level + 1):
-                    flash_text = expected['flash_text']
-                    flash_rodata = expected['flash_rodata']
-                    iram0_text = expected['iram0_text']
-                    dram0_data = expected['dram0_data']
+                    flash_text = expected["flash_text"]
+                    flash_rodata = expected["flash_rodata"]
+                    iram0_text = expected["iram0_text"]
+                    dram0_data = expected["dram0_data"]
 
-                    obj_str = 'obj' + str(append_no)
+                    obj_str = "obj" + str(append_no)
 
-                    flash_text[0].exclusions.add(Entity('lib.a', obj_str))
-                    flash_rodata[0].exclusions.add(Entity('lib.a', obj_str))
+                    flash_text[0].exclusions.add(Entity("lib.a", obj_str))
+                    flash_rodata[0].exclusions.add(Entity("lib.a", obj_str))
 
-                    iram0_text.append(InputSectionDesc(Entity('lib.a', obj_str), flash_text[0].sections, []))
-                    dram0_data.append(InputSectionDesc(Entity('lib.a', obj_str), flash_rodata[0].sections, []))
+                    iram0_text.append(
+                        InputSectionDesc(
+                            Entity("lib.a", obj_str), flash_text[0].sections, []
+                        )
+                    )
+                    dram0_data.append(
+                        InputSectionDesc(
+                            Entity("lib.a", obj_str), flash_rodata[0].sections, []
+                        )
+                    )
 
             self.compare_rules(expected, actual)
 
     def test_multiple_fragment_same_lib_conditional(self):
         # Test conditional entries on new mapping fragment grammar.
         # across multiple fragments.
-        mapping = u"""
+        mapping = """
 [mapping:default]
 archive: *
 entries:
@@ -1331,7 +1492,6 @@ entries:
 
 
 class FlagTest(GenerationTest):
-
     # Test correct generation of mapping fragment entries
     # with flags.
 
@@ -1362,7 +1522,7 @@ class FlagTest(GenerationTest):
         #   libfreertos.a:croutine(.text .literal ...)                                  I
         #   . = ALIGN(4)                                                                G.2
         #   _sym1_end                                                                   H.2
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -1379,33 +1539,37 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        iram0_text = expected['iram0_text']
-        flash_rodata = expected['flash_rodata']
+        flash_text = expected["flash_text"]
+        iram0_text = expected["iram0_text"]
+        flash_rodata = expected["flash_rodata"]
 
         # Exclusions in flash_text for timers and croutine                      A
         flash_text[0].exclusions.add(CROUTINE)
         flash_text[0].exclusions.add(TIMERS)
 
         # Command for #3                                                        B
-        flash_text.append(InputSectionDesc(TIMERS, flash_text[0].sections, [], keep=True, sort=('name', None)))
+        flash_text.append(
+            InputSectionDesc(
+                TIMERS, flash_text[0].sections, [], keep=True, sort=("name", None)
+            )
+        )
 
         # Exclusions in flash_rodata for timers                                 C
         flash_rodata[0].exclusions.add(TIMERS)
 
         # Commands for #3                                                       D.1, E.1, F, D.2, E.2
-        flash_rodata.append(SymbolAtAddress('_sym2_start'))
+        flash_rodata.append(SymbolAtAddress("_sym2_start"))
         flash_rodata.append(AlignAtAddress(4))
         flash_rodata.append(InputSectionDesc(TIMERS, flash_rodata[0].sections, []))
-        flash_rodata.append(SymbolAtAddress('_sym2_end'))
+        flash_rodata.append(SymbolAtAddress("_sym2_end"))
         flash_rodata.append(AlignAtAddress(4))
 
         # Commands for #                                                        G.1, H.1, I, G.2, H.2
         iram0_text.append(AlignAtAddress(4))
-        iram0_text.append(SymbolAtAddress('_sym1_start'))
+        iram0_text.append(SymbolAtAddress("_sym1_start"))
         iram0_text.append(InputSectionDesc(CROUTINE, flash_text[0].sections, []))
         iram0_text.append(AlignAtAddress(4))
-        iram0_text.append(SymbolAtAddress('_sym1_end'))
+        iram0_text.append(SymbolAtAddress("_sym1_end"))
 
         self.compare_rules(expected, actual)
 
@@ -1422,7 +1586,7 @@ entries:
         # iram0_text
         #   *(.iram .iram.*)
         #   libfreertos.a:croutine(.text.prvCheckPendingReadyList ...)                  D
-        mapping = u"""
+        mapping = """
 [mapping:default]
 archive: *
 entries:
@@ -1442,11 +1606,11 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        iram0_text = expected['iram0_text']
+        flash_text = expected["flash_text"]
+        iram0_text = expected["iram0_text"]
 
         # Command for #2, pre                                          A.1
-        flash_text.insert(0, SymbolAtAddress('_sym1_start'))
+        flash_text.insert(0, SymbolAtAddress("_sym1_start"))
 
         # Command for #1 with KEEP()                                     B
         # and exclusion for #3
@@ -1454,19 +1618,34 @@ entries:
         flash_text[1].exclusions.add(CROUTINE)
 
         # Implicit exclusion command for #3                            C
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections.append('.text')
-        flash_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), [], keep=True))
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections.append(".text")
+        flash_text.append(
+            InputSectionDesc(CROUTINE, set(filtered_sections), [], keep=True)
+        )
 
         # Command for #2, post                                         A.2
-        flash_text.append(SymbolAtAddress('_sym1_end'))
+        flash_text.append(SymbolAtAddress("_sym1_end"))
 
         # Command for #3                                               D
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
@@ -1484,7 +1663,7 @@ entries:
         # iram0_text
         #   *(.iram .iram.*)
         #   libfreertos.a:croutine(.text.prvCheckPendingReadyList ...)                  D
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -1499,31 +1678,48 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        iram0_text = expected['iram0_text']
+        flash_text = expected["flash_text"]
+        iram0_text = expected["iram0_text"]
 
         # Command for #2, pre                                          A.1
-        flash_text.append(SymbolAtAddress('_sym1_start'))
+        flash_text.append(SymbolAtAddress("_sym1_start"))
         flash_text[0].exclusions.add(FREERTOS)
 
         # Command for #1 with KEEP()                                     B
         # and exclusion for #3
-        flash_text.append(InputSectionDesc(FREERTOS, flash_text[0].sections, [CROUTINE], keep=True))
+        flash_text.append(
+            InputSectionDesc(FREERTOS, flash_text[0].sections, [CROUTINE], keep=True)
+        )
 
         # Implicit exclusion command for #3                            C
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections.append('.text')
-        flash_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), [], keep=True))
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections.append(".text")
+        flash_text.append(
+            InputSectionDesc(CROUTINE, set(filtered_sections), [], keep=True)
+        )
 
         # Command for #2, post                                         A.2
-        flash_text.append(SymbolAtAddress('_sym1_end'))
+        flash_text.append(SymbolAtAddress("_sym1_end"))
 
         # Command for #3                                               C
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
@@ -1540,7 +1736,7 @@ entries:
         # iram0_text
         #   *(.iram .iram.*)
         #   libfreertos.a:croutine(.text.prvCheckPendingReadyList ...)                  C
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -1555,27 +1751,42 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        iram0_text = expected['iram0_text']
+        flash_text = expected["flash_text"]
+        iram0_text = expected["iram0_text"]
 
         # Command for #2, pre                                          A.1
-        flash_text.append(SymbolAtAddress('_sym1_start'))
+        flash_text.append(SymbolAtAddress("_sym1_start"))
         flash_text[0].exclusions.add(CROUTINE)
 
         # Implicit exclusion command for #3                            B
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections.append('.text')
-        flash_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), [], keep=True))
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections.append(".text")
+        flash_text.append(
+            InputSectionDesc(CROUTINE, set(filtered_sections), [], keep=True)
+        )
 
         # Command for #2, post                                         A.2
-        flash_text.append(SymbolAtAddress('_sym1_end'))
+        flash_text.append(SymbolAtAddress("_sym1_end"))
 
         # Command for #3                                               C
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
@@ -1591,7 +1802,7 @@ entries:
         # iram0_text
         #   *(.iram .iram.*)
         #   libfreertos.a:croutine(.text.prvCheckPendingReadyList ...)                  D
-        mapping = u"""
+        mapping = """
 [mapping:default]
 archive: *
 entries:
@@ -1612,11 +1823,11 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        iram0_text = expected['iram0_text']
+        flash_text = expected["flash_text"]
+        iram0_text = expected["iram0_text"]
 
         # Command for #2, pre                                          A.1
-        flash_text.insert(0, SymbolAtAddress('_sym1_start'))
+        flash_text.insert(0, SymbolAtAddress("_sym1_start"))
 
         # Command for #1 with KEEP()                                     B
         # and exclusion for #3
@@ -1624,19 +1835,32 @@ entries:
         flash_text[1].exclusions.add(CROUTINE)
 
         # Command for #2, post                                         A.2
-        flash_text.append(SymbolAtAddress('_sym1_end'))
+        flash_text.append(SymbolAtAddress("_sym1_end"))
 
         # Command for #3                                               C
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections.append('.text')
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections.append(".text")
         flash_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), []))
 
         # Command for #4                                               D
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
@@ -1653,7 +1877,7 @@ entries:
         # iram0_text
         #   *(.iram .iram.*)
         #   libfreertos.a:croutine(.text.prvCheckPendingReadyList ...)                  D
-        mapping = u"""
+        mapping = """
 [mapping:test]
 archive: libfreertos.a
 entries:
@@ -1669,38 +1893,53 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
-        iram0_text = expected['iram0_text']
+        flash_text = expected["flash_text"]
+        iram0_text = expected["iram0_text"]
 
         # Command for #2, pre                                          A.1
-        flash_text.append(SymbolAtAddress('_sym1_start'))
+        flash_text.append(SymbolAtAddress("_sym1_start"))
         flash_text[0].exclusions.add(FREERTOS)
 
         # Command for #1 with KEEP()                                     B
         # and exclusion for #3
-        flash_text.append(InputSectionDesc(FREERTOS, flash_text[0].sections, [CROUTINE], keep=True))
+        flash_text.append(
+            InputSectionDesc(FREERTOS, flash_text[0].sections, [CROUTINE], keep=True)
+        )
 
         # Command for #2, post                                         A.2
-        flash_text.append(SymbolAtAddress('_sym1_end'))
+        flash_text.append(SymbolAtAddress("_sym1_end"))
 
         # Implicit exclusion command for #3                            C
-        croutine_sections = self.entities.get_sections('libfreertos.a', 'croutine')
-        filtered_sections = fnmatch.filter(croutine_sections, '.literal.*')
-        filtered_sections.extend(fnmatch.filter(croutine_sections, '.text.*'))
+        croutine_sections = self.entities.get_sections("libfreertos.a", "croutine")
+        filtered_sections = fnmatch.filter(croutine_sections, ".literal.*")
+        filtered_sections.extend(fnmatch.filter(croutine_sections, ".text.*"))
 
-        filtered_sections = [s for s in filtered_sections if not s.endswith('prvCheckPendingReadyList')]
-        filtered_sections.append('.text')
+        filtered_sections = [
+            s for s in filtered_sections if not s.endswith("prvCheckPendingReadyList")
+        ]
+        filtered_sections.append(".text")
         flash_text.append(InputSectionDesc(CROUTINE, set(filtered_sections), []))
 
         # Command for #3                                               C
-        iram0_text.append(InputSectionDesc(CROUTINE, set(['.text.prvCheckPendingReadyList', '.literal.prvCheckPendingReadyList']), []))
+        iram0_text.append(
+            InputSectionDesc(
+                CROUTINE,
+                set(
+                    [
+                        ".text.prvCheckPendingReadyList",
+                        ".literal.prvCheckPendingReadyList",
+                    ]
+                ),
+                [],
+            )
+        )
 
         self.compare_rules(expected, actual)
 
     def test_flag_additions(self):
         # Test ability to add flags as long as no other mapping fragments
         # does the same thing.
-        mapping = u"""
+        mapping = """
 [mapping:default_add_flag]
 archive: *
 entries:
@@ -1713,7 +1952,7 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
+        flash_text = expected["flash_text"]
         flash_text[0].keep = True
 
         self.compare_rules(expected, actual)
@@ -1721,7 +1960,7 @@ entries:
     def test_flags_flag_additions_duplicate(self):
         # Test same flags added to same entity - these
         # are ignored.
-        mapping = u"""
+        mapping = """
 [mapping:default_add_flag_1]
 archive: *
 entries:
@@ -1740,7 +1979,7 @@ entries:
         actual = self.generation.generate(self.entities, False)
         expected = self.generate_default_rules()
 
-        flash_text = expected['flash_text']
+        flash_text = expected["flash_text"]
         flash_text[0].keep = True
 
         self.compare_rules(expected, actual)
@@ -1748,7 +1987,7 @@ entries:
     def test_flags_flag_additions_conflict(self):
         # Test condition where multiple fragments specifies flags
         # to same entity - should generate exception.
-        mapping = u"""
+        mapping = """
 [mapping:default_add_flag_1]
 archive: *
 entries:
@@ -1767,5 +2006,5 @@ entries:
             self.generation.generate(self.entities, False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

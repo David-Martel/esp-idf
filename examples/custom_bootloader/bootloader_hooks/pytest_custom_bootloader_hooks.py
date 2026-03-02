@@ -9,5 +9,5 @@ from pytest_embedded import Dut
 @pytest.mark.generic
 def test_custom_bootloader_hooks_example(dut: Dut) -> None:
     # Expect to read both hooks messages
-    dut.expect_exact('This hook is called BEFORE bootloader initialization')
-    dut.expect_exact('This hook is called AFTER bootloader initialization')
+    dut.expect_exact("This hook is called BEFORE bootloader initialization")
+    dut.expect_exact("This hook is called AFTER bootloader initialization")

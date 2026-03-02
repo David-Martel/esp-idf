@@ -55,20 +55,20 @@ import sys
 
 # Check if loaded into GDB
 try:
-    assert gdb.__name__ == 'gdb'  # type: ignore
+    assert gdb.__name__ == "gdb"  # type: ignore
     WITH_GDB = True
 except NameError:
     WITH_GDB = False
 
 # MSEO bit masks:
-MSEO_PKTEND = 1 << 0    # bit 0: indicates the last byte of a packet
-MSEO_MSGEND = 1 << 1    # bit 1: indicates the last byte of the message
+MSEO_PKTEND = 1 << 0  # bit 0: indicates the last byte of a packet
+MSEO_MSGEND = 1 << 1  # bit 1: indicates the last byte of the message
 
 # Message types. The type is stored in the first 6 MDO bits or the first packet.
-TVAL_INDBR = 4	        # Indirect branch
-TVAL_INDBRSYNC = 12	    # Indirect branch w/ synchronisation
-TVAL_SYNC = 9	        # Synchronisation msg
-TVAL_CORR = 33	        # Correlation message
+TVAL_INDBR = 4  # Indirect branch
+TVAL_INDBRSYNC = 12  # Indirect branch w/ synchronisation
+TVAL_SYNC = 9  # Synchronisation msg
+TVAL_CORR = 33  # Correlation message
 
 
 class TraxPacket(object):
@@ -102,7 +102,7 @@ class TraxPacket(object):
                 start_bit = 2
             # how many bits do we need to copy from this byte
             cnt_bits = min(bits_remaining, 8 - start_bit)
-            mask = (2 ** cnt_bits) - 1
+            mask = (2**cnt_bits) - 1
             # take this many bits after the start_bit
             bits = (b >> start_bit) & mask
             # add these bits to the result
@@ -115,7 +115,10 @@ class TraxPacket(object):
         return result
 
     def __str__(self):
-        return '%d byte packet%s' % (self.size_bytes, ' (truncated)' if self.truncated else '')
+        return "%d byte packet%s" % (
+            self.size_bytes,
+            " (truncated)" if self.truncated else "",
+        )
 
 
 class TraxMessage(object):
@@ -134,11 +137,11 @@ class TraxMessage(object):
             self.msg_type = self._get_type()
 
         # Start and end of the instruction range corresponding to this message
-        self.pc_start = 0   # inclusive
-        self.pc_end = 0     # not inclusive
-        self.pc_target = 0      # PC of the next range
-        self.is_exception = False   # whether the message indicates an exception
-        self.is_correlation = False     # whether this is a correlation message
+        self.pc_start = 0  # inclusive
+        self.pc_end = 0  # not inclusive
+        self.pc_target = 0  # PC of the next range
+        self.is_exception = False  # whether the message indicates an exception
+        self.is_correlation = False  # whether this is a correlation message
 
         # message-specific fields
         self.icnt = 0
@@ -156,7 +159,7 @@ class TraxMessage(object):
         return self.packets[0].get_bits(0, 6)
 
     def _decode(self):
-        """ Parse the packets and fill in the message-specific fields """
+        """Parse the packets and fill in the message-specific fields"""
         if self.msg_type == TVAL_INDBR:
             self.icnt = self.packets[0].get_bits(7, -1)
             self.btype = self.packets[0].get_bits(6, 1)
@@ -176,7 +179,7 @@ class TraxMessage(object):
             self.icnt = self.packets[0].get_bits(12, -1)
             self.is_correlation = True
         else:
-            raise NotImplementedError('Unknown message type (%d)' % self.msg_type)
+            raise NotImplementedError("Unknown message type (%d)" % self.msg_type)
 
     def process_forward(self, cur_pc):
         """
@@ -230,24 +233,35 @@ class TraxMessage(object):
         return prev_pc
 
     def __str__(self):
-        desc = 'Unknown (%d)' % self.msg_type
-        extra = ''
+        desc = "Unknown (%d)" % self.msg_type
+        extra = ""
         if self.truncated:
-            desc = 'Truncated'
+            desc = "Truncated"
         if self.msg_type == TVAL_INDBR:
-            desc = 'Indirect branch'
-            extra = ', icnt=%d, uaddr=0x%x, exc=%d' % (self.icnt, self.uaddr, self.is_exception)
+            desc = "Indirect branch"
+            extra = ", icnt=%d, uaddr=0x%x, exc=%d" % (
+                self.icnt,
+                self.uaddr,
+                self.is_exception,
+            )
         if self.msg_type == TVAL_INDBRSYNC:
-            desc = 'Indirect branch w/sync'
-            extra = ', icnt=%d, dcont=%d, exc=%d' % (self.icnt, self.dcont, self.is_exception)
+            desc = "Indirect branch w/sync"
+            extra = ", icnt=%d, dcont=%d, exc=%d" % (
+                self.icnt,
+                self.dcont,
+                self.is_exception,
+            )
         if self.msg_type == TVAL_SYNC:
-            desc = 'Synchronization'
-            extra = ', icnt=%d, dcont=%d' % (self.icnt, self.dcont)
+            desc = "Synchronization"
+            extra = ", icnt=%d, dcont=%d" % (self.icnt, self.dcont)
         if self.msg_type == TVAL_CORR:
-            desc = 'Correlation'
-            extra = ', icnt=%d' % self.icnt
-        return '%s message, %d packets, PC range 0x%08x - 0x%08x, target PC 0x%08x' % (
-            desc, len(self.packets), self.pc_start, self.pc_end, self.pc_target) + extra
+            desc = "Correlation"
+            extra = ", icnt=%d" % self.icnt
+        return (
+            "%s message, %d packets, PC range 0x%08x - 0x%08x, target PC 0x%08x"
+            % (desc, len(self.packets), self.pc_start, self.pc_end, self.pc_target)
+            + extra
+        )
 
 
 def load_messages(data):
@@ -265,11 +279,11 @@ def load_messages(data):
     # Iterate over the input data, splitting bytes into packets and messages
     for i, b in enumerate(data):
         if (b & MSEO_MSGEND) and not (b & MSEO_PKTEND):
-            raise AssertionError('Invalid MSEO bits in b=0x%x. Not a TRAX dump?' % b)
+            raise AssertionError("Invalid MSEO bits in b=0x%x. Not a TRAX dump?" % b)
 
         if b & MSEO_PKTEND:
             pkt_cnt += 1
-            packets.append(TraxPacket(data[packet_start:i + 1], packet_start == 0))
+            packets.append(TraxPacket(data[packet_start : i + 1], packet_start == 0))
             packet_start = i + 1
 
         if b & MSEO_MSGEND:
@@ -277,7 +291,10 @@ def load_messages(data):
             try:
                 messages.append(TraxMessage(packets, len(messages) == 0))
             except NotImplementedError as e:
-                sys.stderr.write('Failed to parse message #%03d (at %d bytes): %s\n' % (msg_cnt, i, str(e)))
+                sys.stderr.write(
+                    "Failed to parse message #%03d (at %d bytes): %s\n"
+                    % (msg_cnt, i, str(e))
+                )
             packets = []
 
     # Resolve PC ranges of messages.
@@ -309,32 +326,35 @@ def parse_and_dump(filename, disassemble=WITH_GDB):
     :param filename: file to load the dump from
     :param disassemble: if True, print disassembly of PC ranges
     """
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         data = f.read()
 
     messages = load_messages(data)
-    sys.stderr.write('Loaded %d messages in %d bytes\n' % (len(messages), len(data)))
+    sys.stderr.write("Loaded %d messages in %d bytes\n" % (len(messages), len(data)))
 
     for i, m in enumerate(messages):
         if m.truncated:
             continue
-        print('%04d: %s' % (i, str(m)))
+        print("%04d: %s" % (i, str(m)))
         if m.is_exception:
-            print('*** Exception occurred ***')
+            print("*** Exception occurred ***")
         if disassemble and WITH_GDB:
             try:
-                gdb.execute('disassemble 0x%08x, 0x%08x' % (m.pc_start, m.pc_end))  # noqa: F821
+                gdb.execute("disassemble 0x%08x, 0x%08x" % (m.pc_start, m.pc_end))  # noqa: F821
             except gdb.MemoryError:  # noqa: F821
-                print('Failed to disassemble from 0x%08x to 0x%08x' % (m.pc_start, m.pc_end))
+                print(
+                    "Failed to disassemble from 0x%08x to 0x%08x"
+                    % (m.pc_start, m.pc_end)
+                )
 
 
 def main():
     if len(sys.argv) < 2:
-        sys.stderr.write('Usage: %s <dump_file>\n')
+        sys.stderr.write("Usage: %s <dump_file>\n")
         raise SystemExit(1)
 
     parse_and_dump(sys.argv[1])
 
 
-if __name__ == '__main__' and not WITH_GDB:
+if __name__ == "__main__" and not WITH_GDB:
     main()

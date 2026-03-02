@@ -3,67 +3,77 @@
 from typing import Dict
 
 from click.core import Context
+
 from idf_py_actions.errors import FatalError
-from idf_py_actions.tools import ensure_build_directory
-from idf_py_actions.tools import is_target_supported
-from idf_py_actions.tools import PropertyDict
-from idf_py_actions.tools import run_target
+from idf_py_actions.tools import (
+    PropertyDict,
+    ensure_build_directory,
+    is_target_supported,
+    run_target,
+)
 
 
 def action_extensions(base_actions: Dict, project_path: str) -> Dict:
+    SUPPORTED_TARGETS = ["esp32s2", "esp32s3", "esp32p4"]
 
-    SUPPORTED_TARGETS = ['esp32s2', 'esp32s3', 'esp32p4']
-
-    def dfu_target(target_name: str, ctx: Context, args: PropertyDict, part_size: str) -> None:
+    def dfu_target(
+        target_name: str, ctx: Context, args: PropertyDict, part_size: str
+    ) -> None:
         ensure_build_directory(args, ctx.info_name)
-        run_target(target_name, args, {'ESP_DFU_PART_SIZE': part_size} if part_size else {})
+        run_target(
+            target_name, args, {"ESP_DFU_PART_SIZE": part_size} if part_size else {}
+        )
 
     def dfu_list_target(target_name: str, ctx: Context, args: PropertyDict) -> None:
         ensure_build_directory(args, ctx.info_name)
         run_target(target_name, args)
 
-    def dfu_flash_target(target_name: str, ctx: Context, args: PropertyDict, path: str) -> None:
+    def dfu_flash_target(
+        target_name: str, ctx: Context, args: PropertyDict, path: str
+    ) -> None:
         ensure_build_directory(args, ctx.info_name)
 
         try:
-            run_target(target_name, args, {'ESP_DFU_PATH': path})
+            run_target(target_name, args, {"ESP_DFU_PATH": path})
         except FatalError:
             # Cannot capture the error from dfu-util here so the best advise is:
-            print('Please have a look at the "Device Firmware Upgrade through USB" chapter in API Guides of the '
-                  'ESP-IDF documentation for solving common dfu-util issues.')
+            print(
+                'Please have a look at the "Device Firmware Upgrade through USB" chapter in API Guides of the '
+                "ESP-IDF documentation for solving common dfu-util issues."
+            )
             raise
 
     dfu_actions = {
-        'actions': {
-            'dfu': {
-                'callback': dfu_target,
-                'short_help': 'Build the DFU binary',
-                'dependencies': ['all'],
-                'options': [
+        "actions": {
+            "dfu": {
+                "callback": dfu_target,
+                "short_help": "Build the DFU binary",
+                "dependencies": ["all"],
+                "options": [
                     {
-                        'names': ['--part-size'],
-                        'help': 'Large files are split up into smaller partitions in order to avoid timeout during '
-                                'erasing flash. This option allows to overwrite the default partition size of '
-                                'mkdfu.py.'
+                        "names": ["--part-size"],
+                        "help": "Large files are split up into smaller partitions in order to avoid timeout during "
+                        "erasing flash. This option allows to overwrite the default partition size of "
+                        "mkdfu.py.",
                     }
                 ],
             },
-            'dfu-list': {
-                'callback': dfu_list_target,
-                'short_help': 'List DFU capable devices',
-                'dependencies': [],
+            "dfu-list": {
+                "callback": dfu_list_target,
+                "short_help": "List DFU capable devices",
+                "dependencies": [],
             },
-            'dfu-flash': {
-                'callback': dfu_flash_target,
-                'short_help': 'Flash the DFU binary',
-                'order_dependencies': ['dfu'],
-                'options': [
+            "dfu-flash": {
+                "callback": dfu_flash_target,
+                "short_help": "Flash the DFU binary",
+                "order_dependencies": ["dfu"],
+                "options": [
                     {
-                        'names': ['--path'],
-                        'default': '',
-                        'help': 'Specify path to DFU device. The default empty path works if there is just one '
-                                'ESP device with the same product identifier. See the device list for paths '
-                                'of available devices.'
+                        "names": ["--path"],
+                        "default": "",
+                        "help": "Specify path to DFU device. The default empty path works if there is just one "
+                        "ESP device with the same product identifier. See the device list for paths "
+                        "of available devices.",
                     }
                 ],
             },

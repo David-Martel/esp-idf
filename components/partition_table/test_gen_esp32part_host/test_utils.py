@@ -9,7 +9,6 @@ except ImportError:
 
 
 class Py23TestCase(unittest.TestCase):
-
     def __init__(self, *args, **kwargs):  # type: (Any, Any) -> None
         super(Py23TestCase, self).__init__(*args, **kwargs)
         try:

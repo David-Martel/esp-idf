@@ -12,9 +12,8 @@ from pytest_embedded import Dut
 @pytest.mark.esp32s3
 @pytest.mark.generic
 def test_ulp_riscv_gpio(dut: Dut) -> None:
-
-    dut.expect_exact('Not a ULP-RISC-V wakeup, initializing it!')
-    dut.expect_exact('Entering in deep sleep')
+    dut.expect_exact("Not a ULP-RISC-V wakeup, initializing it!")
+    dut.expect_exact("Entering in deep sleep")
 
     # Give the chip time to enter deepsleep
     time.sleep(1)
@@ -25,19 +24,21 @@ def test_ulp_riscv_gpio(dut: Dut) -> None:
         # Set GPIO0 using DTR
         dut.serial.proc.setDTR(i % 2 == 0)
 
-        dut.expect_exact('ULP-RISC-V woke up the main CPU!', timeout=5)
+        dut.expect_exact("ULP-RISC-V woke up the main CPU!", timeout=5)
 
         # Check GPIO state
-        state = 'Low' if i % 2 == 0 else 'High'
-        dut.expect(r'ULP-RISC-V read changes in GPIO_0 current is: %s' % state, timeout=5)
+        state = "Low" if i % 2 == 0 else "High"
+        dut.expect(
+            r"ULP-RISC-V read changes in GPIO_0 current is: %s" % state, timeout=5
+        )
 
         # Go back to sleep
-        dut.expect_exact('Entering in deep sleep', timeout=5)
+        dut.expect_exact("Entering in deep sleep", timeout=5)
 
         try:
             # We expect a timeout here, otherwise it means that
             # the main CPU woke up unexpectedly!
-            dut.expect('ULP-RISC-V woke up the main CPU!', timeout=20)
-            raise Exception('Main CPU woke up unexpectedly!')
+            dut.expect("ULP-RISC-V woke up the main CPU!", timeout=20)
+            raise Exception("Main CPU woke up unexpectedly!")
         except pexpect.exceptions.TIMEOUT:
             pass

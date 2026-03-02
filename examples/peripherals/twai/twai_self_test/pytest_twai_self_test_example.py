@@ -8,5 +8,5 @@ from pytest_embedded import Dut
 @pytest.mark.esp32
 @pytest.mark.twai_transceiver
 def test_twai_self_test_example(dut: Dut) -> None:
-    dut.expect_exact('TWAI Self Test: Driver installed')
-    dut.expect_exact('TWAI Self Test: Driver uninstalled')
+    dut.expect_exact("TWAI Self Test: Driver installed")
+    dut.expect_exact("TWAI Self Test: Driver uninstalled")

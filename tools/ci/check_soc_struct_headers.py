@@ -23,15 +23,14 @@
 import os
 import re
 import sys
-from typing import Any
-from typing import Optional
+from typing import Any, Optional
 
 
 class MemberField:
-    member_type = ''
+    member_type = ""
     bitfield = None
 
-    def __init__(self, m_type: str, m_bits: Optional[int]=None) -> None:
+    def __init__(self, m_type: str, m_bits: Optional[int] = None) -> None:
         self.member_type = m_type
         self.bitfield = m_bits
 
@@ -49,41 +48,49 @@ class MemberField:
 
 class SoCStructureHeaderChecker:
     # capture: typedef, volatile, struct name
-    __REGEXP_MATCH_STRUCTURE_BEGIN = r'^[\s]*(typedef)?(?:[\s]+(volatile))?[\s]+struct[\s]+([\w]+)?[\s\S]*$'
+    __REGEXP_MATCH_STRUCTURE_BEGIN = (
+        r"^[\s]*(typedef)?(?:[\s]+(volatile))?[\s]+struct[\s]+([\w]+)?[\s\S]*$"
+    )
     # capture: typedef, volatile, union name
-    __REGEXP_MATCH_UNION_BEGIN = r'^[\s]*(typedef)?(?:[\s]+(volatile))?[\s]+union[\s]+([\w]+)?[\s\S]*$'
+    __REGEXP_MATCH_UNION_BEGIN = (
+        r"^[\s]*(typedef)?(?:[\s]+(volatile))?[\s]+union[\s]+([\w]+)?[\s\S]*$"
+    )
     # capture: type_var_name
-    __REGEXP_MATCH_STRUCT_UNION_END_NAME = r'^[\s]*}[\s]*([\w\[\]\*]*)[\s]*;[\s\S]*$'
+    __REGEXP_MATCH_STRUCT_UNION_END_NAME = r"^[\s]*}[\s]*([\w\[\]\*]*)[\s]*;[\s\S]*$"
     # capture: type, name, bitfield
-    __REGEXP_MATCH_BITFIELD_MEMBER = (r'^[\s]*(?:(?:volatile[\s]+)|(?:))([\w\*]+)[\s]+([\w\*]+(?:(?:\[[\s\S]*\])|(?:)))'
-                                      r'[\s]*(?:(?:[\s]*;)|(?::[\s]*([\d]+)[\s]*;))[\s\S]*$')
+    __REGEXP_MATCH_BITFIELD_MEMBER = (
+        r"^[\s]*(?:(?:volatile[\s]+)|(?:))([\w\*]+)[\s]+([\w\*]+(?:(?:\[[\s\S]*\])|(?:)))"
+        r"[\s]*(?:(?:[\s]*;)|(?::[\s]*([\d]+)[\s]*;))[\s\S]*$"
+    )
     # should be useless and can be safely deleted
-    __REGEXP_MATCH_MULTILINE_COMMENT = r'^[\s]*[\/]{0,2}\*[\/]?[\s\S]*$'
-    __REGEX_MATCH_SIMPLE_VAL_FIELD = r'^[\s]*(?:(?:volatile[\s]+)|(?:))([\w]+)[\s]+([\w\[\]\*]+)[\s]*;[\s]*$'
+    __REGEXP_MATCH_MULTILINE_COMMENT = r"^[\s]*[\/]{0,2}\*[\/]?[\s\S]*$"
+    __REGEX_MATCH_SIMPLE_VAL_FIELD = (
+        r"^[\s]*(?:(?:volatile[\s]+)|(?:))([\w]+)[\s]+([\w\[\]\*]+)[\s]*;[\s]*$"
+    )
     # capture: type, name
-    __REGEX_MATCH_ROOT_EXTERNAL = r'^[\s]*extern[\s]+([\w]+)[\s]+([\w]+)[\s]*;[\s]*$'
+    __REGEX_MATCH_ROOT_EXTERNAL = r"^[\s]*extern[\s]+([\w]+)[\s]+([\w]+)[\s]*;[\s]*$"
 
     __linecount = 0
-    __fd = None     # type: Any
+    __fd = None  # type: Any
     __is_eof = False
 
     # generated reference tree
-    __ref_tree = dict()     # type: dict
+    __ref_tree = dict()  # type: dict
     # middle result of generated tree, shared
     # named typedef, or named struct/union. referd but will not delete
-    __temp_ref_types = dict()   # type: dict
+    __temp_ref_types = dict()  # type: dict
 
-    def __expand_type(self, member_type: str, bitfield: Optional[int]=None) -> Any:
-        if member_type == 'uint32_t':
+    def __expand_type(self, member_type: str, bitfield: Optional[int] = None) -> Any:
+        if member_type == "uint32_t":
             return MemberField(member_type, bitfield)
         if bitfield is not None:
-            print('\033[0;31mERROR\033[0m: non-u32 type with bitfield')
+            print("\033[0;31mERROR\033[0m: non-u32 type with bitfield")
             return None
         if member_type in self.__temp_ref_types:
             return self.__temp_ref_types[member_type]
         return None
 
-    def __getline(self, incomment:bool=False) -> Any:
+    def __getline(self, incomment: bool = False) -> Any:
         rawline = self.__fd.readline()
         if not rawline:
             self.__is_eof = True
@@ -91,50 +98,60 @@ class SoCStructureHeaderChecker:
         self.__linecount += 1
 
         if incomment:
-            pos = rawline.find('*/')
+            pos = rawline.find("*/")
             if pos != -1:
                 # set string that is behind comment
-                rawline = rawline[pos + 2:]
+                rawline = rawline[pos + 2 :]
             else:
                 # continue multiple line
                 return self.__getline(True)
 
         # preprocess: remove '// comment'
-        match_obj = re.match(r'^([^(\/\/)]*)\/\/[\s\S]*$', rawline)
+        match_obj = re.match(r"^([^(\/\/)]*)\/\/[\s\S]*$", rawline)
         if match_obj is not None:
             rawline = match_obj.groups()[0]
         # preprocess: remove '/* comment'
-        match_obj = re.match(r'^([^(\/\*)]*)\/\*([\s\S]*)$', rawline)
+        match_obj = re.match(r"^([^(\/\*)]*)\/\*([\s\S]*)$", rawline)
         if match_obj is not None:
             rawline = match_obj.groups()[0]
             # check if multiline commit in oneline
-            pos = match_obj.groups()[1].find('*/')
+            pos = match_obj.groups()[1].find("*/")
             if pos != -1:
                 # apply string that is behind comment
-                rawline = rawline + match_obj.groups()[1][pos + 2:]
+                rawline = rawline + match_obj.groups()[1][pos + 2 :]
             else:
                 # multiple line
                 return self.__getline(True)
 
-        if re.match(r'^[\s]*$', rawline):
+        if re.match(r"^[\s]*$", rawline):
             # skip empty line
             return self.__getline()
-        if rawline.count(';') > 1:
-            print('\033[0;34mINFO\033[0m: line: {}: possibly multiple expression within same line'.format(self.__linecount))
+        if rawline.count(";") > 1:
+            print(
+                "\033[0;34mINFO\033[0m: line: {}: possibly multiple expression within same line".format(
+                    self.__linecount
+                )
+            )
             print(rawline)
         return rawline
 
-    def __process_structure(self, name: str, is_typedef: bool, is_volatile: bool) -> Any:
+    def __process_structure(
+        self, name: str, is_typedef: bool, is_volatile: bool
+    ) -> Any:
         ret_val = 0
         # first check for anonymous register structs
         if is_typedef and is_volatile and name is None:
-            print('\033[0;31mERROR\033[0m: line {}: anonymous struct'.format(self.__linecount))
+            print(
+                "\033[0;31mERROR\033[0m: line {}: anonymous struct".format(
+                    self.__linecount
+                )
+            )
             ret_val = -1
         node_tree = dict()
         bitcount = 0
         has_nested_struct_union = False
         has_non_bitfield_member = False
-        parsed_varname = ''
+        parsed_varname = ""
         while not self.__is_eof:
             rawline = self.__getline()
             if rawline is None:
@@ -144,7 +161,10 @@ class SoCStructureHeaderChecker:
             if match_obj is not None:
                 has_nested_struct_union = True
                 ret, inherited_node_tree = self.__process_structure(
-                    match_obj.groups()[2], match_obj.groups()[0] == 'typedef', match_obj.groups()[1] == 'volatile')
+                    match_obj.groups()[2],
+                    match_obj.groups()[0] == "typedef",
+                    match_obj.groups()[1] == "volatile",
+                )
                 if ret != 0:
                     ret_val = -2
                 if inherited_node_tree is not None:
@@ -154,7 +174,11 @@ class SoCStructureHeaderChecker:
             match_obj = re.match(self.__REGEXP_MATCH_UNION_BEGIN, rawline)
             if match_obj is not None:
                 has_nested_struct_union = True
-                ret, inherited_node_tree = self.__process_union(match_obj.groups()[2], match_obj.groups()[0] == 'typedef', match_obj.groups()[1] == 'volatile')
+                ret, inherited_node_tree = self.__process_union(
+                    match_obj.groups()[2],
+                    match_obj.groups()[0] == "typedef",
+                    match_obj.groups()[1] == "volatile",
+                )
                 if ret != 0:
                     ret_val = -2
                 if inherited_node_tree is not None:
@@ -168,34 +192,52 @@ class SoCStructureHeaderChecker:
                 if bitcount not in (0, 32):
                     ret_val = -2
                     if is_typedef:
-                        print('\033[0;31mERROR\033[0m: line {}: bitfield count is {}, type {}'.format(self.__linecount, bitcount, match_obj.groups()[0]))
+                        print(
+                            "\033[0;31mERROR\033[0m: line {}: bitfield count is {}, type {}".format(
+                                self.__linecount, bitcount, match_obj.groups()[0]
+                            )
+                        )
                     else:
-                        print('\033[0;31mERROR\033[0m: line {}: bitfield count is {}, type {}, varname "{}"'
-                              .format(self.__linecount, bitcount, name, match_obj.groups()[0]))
+                        print(
+                            '\033[0;31mERROR\033[0m: line {}: bitfield count is {}, type {}, varname "{}"'.format(
+                                self.__linecount, bitcount, name, match_obj.groups()[0]
+                            )
+                        )
                 parsed_varname = match_obj.groups()[0]
                 if is_typedef:
                     # is a typedef
-                    if match_obj.groups()[0] == '' or match_obj.groups()[0].find('[') != -1:
+                    if (
+                        match_obj.groups()[0] == ""
+                        or match_obj.groups()[0].find("[") != -1
+                    ):
                         # should be c error
-                        print('\033[0;31mERROR\033[0m: line {}: C error'.format(self.__linecount))
+                        print(
+                            "\033[0;31mERROR\033[0m: line {}: C error".format(
+                                self.__linecount
+                            )
+                        )
                         ret_val = -3
                     if match_obj.groups()[0] in self.__temp_ref_types:
                         # duplication, script bug: we are putting all types into same namespace
-                        print('script run into bug...')
+                        print("script run into bug...")
                     self.__temp_ref_types[match_obj.groups()[0]] = dict()
                     for member in node_tree:
-                        self.__temp_ref_types[match_obj.groups()[0]][member] = node_tree[member]
+                        self.__temp_ref_types[match_obj.groups()[0]][member] = (
+                            node_tree[member]
+                        )
                 elif name is not None:
                     # currently this kind of expression doesn't exist
-                    print('!!!!!!UNDEALED CONDITION!!!!!')
-                elif match_obj.groups()[0] != '':
+                    print("!!!!!!UNDEALED CONDITION!!!!!")
+                elif match_obj.groups()[0] != "":
                     # named member, wrap and overwrite
                     if len(node_tree) == 0:
                         node_tree = None
                     else:
-                        array_match = re.match(r'^([\w]*)\[[\s\S]*\]$', match_obj.groups()[0])
+                        array_match = re.match(
+                            r"^([\w]*)\[[\s\S]*\]$", match_obj.groups()[0]
+                        )
                         if array_match is not None:
-                            node_tree = {array_match.groups()[0] + '[]': node_tree}
+                            node_tree = {array_match.groups()[0] + "[]": node_tree}
                         else:
                             node_tree = {match_obj.groups()[0]: node_tree}
                 else:
@@ -210,23 +252,38 @@ class SoCStructureHeaderChecker:
                     field_bit = int(match_obj.groups()[2])
                     bitcount += field_bit
                     # bitfield should be u32
-                    if match_obj.groups()[0] != 'uint32_t':
-                        print('\033[0;33mWARN\033[0m: line: {}: {} has type {}'.format(self.__linecount, match_obj.groups()[1], match_obj.groups()[0]))
+                    if match_obj.groups()[0] != "uint32_t":
+                        print(
+                            "\033[0;33mWARN\033[0m: line: {}: {} has type {}".format(
+                                self.__linecount,
+                                match_obj.groups()[1],
+                                match_obj.groups()[0],
+                            )
+                        )
                 else:
                     has_non_bitfield_member = True
                 # append to node tree
                 member_node = self.__expand_type(match_obj.groups()[0], field_bit)
                 if member_node is not None:
-                    array_match = re.match(r'^([\w]*)\[[\s\S]*\]$', match_obj.groups()[1])
+                    array_match = re.match(
+                        r"^([\w]*)\[[\s\S]*\]$", match_obj.groups()[1]
+                    )
                     if array_match is not None:
-                        node_tree[array_match.groups()[0] + '[]'] = member_node
+                        node_tree[array_match.groups()[0] + "[]"] = member_node
                     else:
                         node_tree[match_obj.groups()[1]] = member_node
+                elif "*" not in match_obj.groups()[0]:
+                    print(
+                        "\033[0;33mWARN\033[0m: line {}: unknown type {}".format(
+                            self.__linecount, match_obj.groups()[0]
+                        )
+                    )
                 else:
-                    if '*' not in match_obj.groups()[0]:
-                        print('\033[0;33mWARN\033[0m: line {}: unknown type {}'.format(self.__linecount, match_obj.groups()[0]))
-                    else:
-                        print('\033[0;33mWARN\033[0m: line {}: pointer type {}'.format(self.__linecount, match_obj.groups()[0]))
+                    print(
+                        "\033[0;33mWARN\033[0m: line {}: pointer type {}".format(
+                            self.__linecount, match_obj.groups()[0]
+                        )
+                    )
                 continue
             # check comments
             match_obj = re.match(self.__REGEXP_MATCH_MULTILINE_COMMENT, rawline)
@@ -234,24 +291,51 @@ class SoCStructureHeaderChecker:
                 # code comments
                 continue
             # dump out unmatched condition
-            print(('\033[0;33mWARN\033[0m: line: {}: unexpected expression: {}'.format(self.__linecount, rawline)).replace('\n', ''))
+            print(
+                (
+                    "\033[0;33mWARN\033[0m: line: {}: unexpected expression: {}".format(
+                        self.__linecount, rawline
+                    )
+                ).replace("\n", "")
+            )
 
         if bitcount != 0 and has_nested_struct_union:
-            print('\033[0;33mWARN\033[0m: line: {}: mixed bitfield member and nested structure/union'.format(self.__linecount))
+            print(
+                "\033[0;33mWARN\033[0m: line: {}: mixed bitfield member and nested structure/union".format(
+                    self.__linecount
+                )
+            )
         if bitcount != 0 and has_non_bitfield_member:
-            print('\033[0;33mWARN\033[0m: line: {}: mixed bitfield member and non-bitfield member'.format(self.__linecount))
+            print(
+                "\033[0;33mWARN\033[0m: line: {}: mixed bitfield member and non-bitfield member".format(
+                    self.__linecount
+                )
+            )
         if is_typedef and is_volatile and name is None:
-            if parsed_varname != '':
-                print('SUGGEST: {}'.format(parsed_varname.rstrip('t') + 's'))
-        if name is not None and is_typedef and is_volatile and parsed_varname.rstrip('t') != name.rstrip('s'):
-            print('\033[0;33mWARN\033[0m: line: {}: different type and typedef name: {} {}'.format(self.__linecount, name, parsed_varname))
+            if parsed_varname != "":
+                print("SUGGEST: {}".format(parsed_varname.rstrip("t") + "s"))
+        if (
+            name is not None
+            and is_typedef
+            and is_volatile
+            and parsed_varname.rstrip("t") != name.rstrip("s")
+        ):
+            print(
+                "\033[0;33mWARN\033[0m: line: {}: different type and typedef name: {} {}".format(
+                    self.__linecount, name, parsed_varname
+                )
+            )
         return ret_val, node_tree
 
     def __process_union(self, name: str, is_typedef: bool, is_volatile: bool) -> Any:
         ret_val = 0
         # first check for anonymous register structs
         if is_typedef and is_volatile and name is None:
-            print('\033[0;31mERROR\033[0m: line {}: anonymous union'.format(self.__linecount))
+            print(
+                "\033[0;31mERROR\033[0m: line {}: anonymous union".format(
+                    self.__linecount
+                )
+            )
             ret_val = -1
         node_tree = dict()  # type: Any
         has_struct_count = 0
@@ -265,7 +349,10 @@ class SoCStructureHeaderChecker:
             if match_obj is not None:
                 has_struct_count += 1
                 ret, inherited_node_tree = self.__process_structure(
-                    match_obj.groups()[2], match_obj.groups()[0] == 'typedef', match_obj.groups()[1] == 'volatile')
+                    match_obj.groups()[2],
+                    match_obj.groups()[0] == "typedef",
+                    match_obj.groups()[1] == "volatile",
+                )
                 if ret != 0:
                     ret_val = -2
                 if inherited_node_tree is not None:
@@ -275,7 +362,11 @@ class SoCStructureHeaderChecker:
             match_obj = re.match(self.__REGEXP_MATCH_UNION_BEGIN, rawline)
             if match_obj is not None:
                 has_struct_count += 1
-                ret, inherited_node_tree = self.__process_union(match_obj.groups()[2], match_obj.groups()[0] == 'typedef', match_obj.groups()[1] == 'volatile')
+                ret, inherited_node_tree = self.__process_union(
+                    match_obj.groups()[2],
+                    match_obj.groups()[0] == "typedef",
+                    match_obj.groups()[1] == "volatile",
+                )
                 if ret != 0:
                     ret_val = -2
                 if inherited_node_tree is not None:
@@ -288,28 +379,36 @@ class SoCStructureHeaderChecker:
                 # end of struct
                 if is_typedef:
                     # is a typedef
-                    if match_obj.groups()[0] == '':
+                    if match_obj.groups()[0] == "":
                         # should be c error
-                        print('\033[0;31mERROR\033[0m: line {}: C error'.format(self.__linecount))
+                        print(
+                            "\033[0;31mERROR\033[0m: line {}: C error".format(
+                                self.__linecount
+                            )
+                        )
                         ret_val = -3
                     if match_obj.groups()[0] in self.__temp_ref_types:
                         # duplication, script bug: we are putting all types into same namespace
-                        print('script run into bug...')
+                        print("script run into bug...")
                     self.__temp_ref_types[match_obj.groups()[0]] = dict()
                     for member in node_tree:
-                        self.__temp_ref_types[match_obj.groups()[0]][member] = node_tree[member]
+                        self.__temp_ref_types[match_obj.groups()[0]][member] = (
+                            node_tree[member]
+                        )
                     node_tree = None
                 elif name is not None:
                     # currently this kind of expression doesn't exist
-                    print('!!!!!!UNDEALED CONDITION!!!!!')
-                elif match_obj.groups()[0] != '':
+                    print("!!!!!!UNDEALED CONDITION!!!!!")
+                elif match_obj.groups()[0] != "":
                     # named member, wrap and overwrite
                     if len(node_tree) == 0:
                         node_tree = None
                     else:
-                        array_match = re.match(r'^([\w]*)\[[\s\S]*\]$', match_obj.groups()[0])
+                        array_match = re.match(
+                            r"^([\w]*)\[[\s\S]*\]$", match_obj.groups()[0]
+                        )
                         if array_match is not None:
-                            node_tree = {array_match.groups()[0] + '[]': node_tree}
+                            node_tree = {array_match.groups()[0] + "[]": node_tree}
                         else:
                             node_tree = {match_obj.groups()[0]: node_tree}
                 else:
@@ -323,31 +422,65 @@ class SoCStructureHeaderChecker:
             match_obj = re.match(self.__REGEX_MATCH_SIMPLE_VAL_FIELD, rawline)
             if match_obj is not None:
                 # expecting to see 'uint32_t val;'
-                if match_obj.groups()[0] != 'uint32_t' or match_obj.groups()[1] != 'val':
-                    print(('\033[0;33mWARN\033[0m: unexpected union member at {}: {}'.format(self.__linecount, rawline)).replace('\n', ''))
+                if (
+                    match_obj.groups()[0] != "uint32_t"
+                    or match_obj.groups()[1] != "val"
+                ):
+                    print(
+                        (
+                            "\033[0;33mWARN\033[0m: unexpected union member at {}: {}".format(
+                                self.__linecount, rawline
+                            )
+                        ).replace("\n", "")
+                    )
                 else:
                     has_val_field_count += 1
                 # append to node tree
                 member_node = self.__expand_type(match_obj.groups()[0], None)
                 if member_node is not None:
                     node_tree[match_obj.groups()[1]] = member_node
+                elif "*" not in match_obj.groups()[0]:
+                    print(
+                        "\033[0;31mWARN\033[0m: line {}: unknown type {}".format(
+                            self.__linecount, match_obj.groups()[0]
+                        )
+                    )
                 else:
-                    if '*' not in match_obj.groups()[0]:
-                        print('\033[0;31mWARN\033[0m: line {}: unknown type {}'.format(self.__linecount, match_obj.groups()[0]))
-                    else:
-                        print('\033[0;33mWARN\033[0m: line {}: pointer type {}'.format(self.__linecount, match_obj.groups()[0]))
+                    print(
+                        "\033[0;33mWARN\033[0m: line {}: pointer type {}".format(
+                            self.__linecount, match_obj.groups()[0]
+                        )
+                    )
                 continue
             # dump out unmatched condition
-            print(('\033[0;33mWARN\033[0m: line: {}: unexpected expression: {}'.format(self.__linecount, rawline)).replace('\n', ''))
+            print(
+                (
+                    "\033[0;33mWARN\033[0m: line: {}: unexpected expression: {}".format(
+                        self.__linecount, rawline
+                    )
+                ).replace("\n", "")
+            )
 
         if not (has_struct_count == 1 and has_val_field_count == 1):
-            print('\033[0;34mINFO\033[0m: line: {}: not a typical union: {} nested structures, {} u32 val member'
-                  .format(self.__linecount, has_struct_count, has_val_field_count))
+            print(
+                "\033[0;34mINFO\033[0m: line: {}: not a typical union: {} nested structures, {} u32 val member".format(
+                    self.__linecount, has_struct_count, has_val_field_count
+                )
+            )
         if is_typedef and is_volatile and name is None:
-            if parsed_varname != '':
-                print('SUGGEST: {}'.format(parsed_varname.rstrip('t') + 's'))
-        if name is not None and is_typedef and is_volatile and parsed_varname.rstrip('t') != name.rstrip('s'):
-            print('\033[0;33mWARN\033[0m: line: {}: different type and typedef name: {} {}'.format(self.__linecount, name, parsed_varname))
+            if parsed_varname != "":
+                print("SUGGEST: {}".format(parsed_varname.rstrip("t") + "s"))
+        if (
+            name is not None
+            and is_typedef
+            and is_volatile
+            and parsed_varname.rstrip("t") != name.rstrip("s")
+        ):
+            print(
+                "\033[0;33mWARN\033[0m: line: {}: different type and typedef name: {} {}".format(
+                    self.__linecount, name, parsed_varname
+                )
+            )
         return ret_val, node_tree
 
     def __process_root(self) -> int:
@@ -362,7 +495,10 @@ class SoCStructureHeaderChecker:
             match_obj = re.match(self.__REGEXP_MATCH_STRUCTURE_BEGIN, rawline)
             if match_obj is not None:
                 ret, inherited_node_tree = self.__process_structure(
-                    match_obj.groups()[2], match_obj.groups()[0] == 'typedef', match_obj.groups()[1] == 'volatile')
+                    match_obj.groups()[2],
+                    match_obj.groups()[0] == "typedef",
+                    match_obj.groups()[1] == "volatile",
+                )
                 if ret != 0:
                     ret_val = -2
                 if inherited_node_tree is not None:
@@ -371,7 +507,11 @@ class SoCStructureHeaderChecker:
                 continue
             match_obj = re.match(self.__REGEXP_MATCH_UNION_BEGIN, rawline)
             if match_obj is not None:
-                ret, inherited_node_tree = self.__process_union(match_obj.groups()[2], match_obj.groups()[0] == 'typedef', match_obj.groups()[1] == 'volatile')
+                ret, inherited_node_tree = self.__process_union(
+                    match_obj.groups()[2],
+                    match_obj.groups()[0] == "typedef",
+                    match_obj.groups()[1] == "volatile",
+                )
                 if ret != 0:
                     ret_val = -2
                 if inherited_node_tree is not None:
@@ -381,12 +521,14 @@ class SoCStructureHeaderChecker:
             # processing root level external declaration
             match_obj = re.match(self.__REGEX_MATCH_ROOT_EXTERNAL, rawline)
             if match_obj is not None:
-                self.__ref_tree[match_obj.groups()[1]] = self.__expand_type(match_obj.groups()[0])
+                self.__ref_tree[match_obj.groups()[1]] = self.__expand_type(
+                    match_obj.groups()[0]
+                )
                 continue
         return ret_val
 
     def check(self, file: str) -> int:
-        self.__fd = open(file, 'r', encoding='utf8')
+        self.__fd = open(file, "r", encoding="utf8")
         self.__linecount = 0
         self.__is_eof = False
 
@@ -394,9 +536,9 @@ class SoCStructureHeaderChecker:
 
         self.__fd.close()
         if ret_val != 0:
-            print('\033[0;31mCHECK FAILED\033[0m:\t{}'.format(file))
+            print("\033[0;31mCHECK FAILED\033[0m:\t{}".format(file))
         else:
-            print('\033[0;32mCHECK PASSED\033[0m:\t{}'.format(file))
+            print("\033[0;32mCHECK PASSED\033[0m:\t{}".format(file))
         return ret_val
 
     def get_ref_tree(self) -> Any:
@@ -406,16 +548,16 @@ class SoCStructureHeaderChecker:
 def main() -> None:
     ret = 0
     if len(sys.argv) <= 1 or not os.path.isfile(sys.argv[1]):
-        print('file not exist')
+        print("file not exist")
         exit(-1)
     checker = SoCStructureHeaderChecker()
-    print('CHECKING:\t{}'.format(sys.argv[1]))
+    print("CHECKING:\t{}".format(sys.argv[1]))
     ret = checker.check(sys.argv[1])
-    if len(sys.argv) == 3 and sys.argv[2] == 'print':
+    if len(sys.argv) == 3 and sys.argv[2] == "print":
         print(checker.get_ref_tree())
     del checker
     sys.exit(ret)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

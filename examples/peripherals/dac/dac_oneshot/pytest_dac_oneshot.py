@@ -11,7 +11,12 @@ from pytest_embedded import Dut
 def test_dac_oneshot_example(dut: Dut) -> None:
     res = []
     for _ in range(10):
-        res.append(dut.expect(r'DAC channel 0 value:( +)(\d+)(.*)DAC channel 1 value:( +)(\d+)', timeout=10))
+        res.append(
+            dut.expect(
+                r"DAC channel 0 value:( +)(\d+)(.*)DAC channel 1 value:( +)(\d+)",
+                timeout=10,
+            )
+        )
 
     avg1_ch1 = 0
     avg1_ch2 = 0

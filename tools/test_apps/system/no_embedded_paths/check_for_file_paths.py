@@ -41,9 +41,9 @@ from elftools.elf.elffile import ELFFile
 #
 # Note: once ESP-IDF moves to Python >=3.6 then this can be simplified to use 'glob' and '**'
 EXCEPTIONS = [
-    r'openssl/.+/ssl_pm.c.obj$',  # openssl API requires __FILE__ in error reporting functions, as per upstream API
-    r'openssl/.+/ssl_bio.c.obj$',
-    r'unity/.+/unity_runner.c.obj$',  # unity is not for production use, has __FILE__ for test information
+    r"openssl/.+/ssl_pm.c.obj$",  # openssl API requires __FILE__ in error reporting functions, as per upstream API
+    r"openssl/.+/ssl_bio.c.obj$",
+    r"unity/.+/unity_runner.c.obj$",  # unity is not for production use, has __FILE__ for test information
 ]
 
 
@@ -54,14 +54,20 @@ def main():  # type: () -> None
     assert os.path.exists(idf_path)
     assert os.path.exists(build_dir)
 
-    print('Checking object files in {} for mentions of {}...'.format(build_dir, idf_path))
+    print(
+        "Checking object files in {} for mentions of {}...".format(build_dir, idf_path)
+    )
 
     # note: once ESP-IDF moves to Python >=3.6 then this can be simplified to use 'glob' and f'{build_dir}**/*.obj'
     files = []
-    for (dirpath, _, filepaths) in os.walk(build_dir):
-        files += [os.path.join(dirpath, filepath) for filepath in filepaths if filepath.endswith('.obj')]
+    for dirpath, _, filepaths in os.walk(build_dir):
+        files += [
+            os.path.join(dirpath, filepath)
+            for filepath in filepaths
+            if filepath.endswith(".obj")
+        ]
 
-    print('Found {} object files...'.format(len(files)))
+    print("Found {} object files...".format(len(files)))
 
     idf_path_binary = idf_path.encode()  # we're going to be checking binary streams (note: probably non-ascii IDF_PATH will not match OK)
 
@@ -70,25 +76,29 @@ def main():  # type: () -> None
         if not any(re.search(exception, obj_file) for exception in EXCEPTIONS):
             failures += check_file(obj_file, idf_path_binary)
     if failures > 0:
-        raise SystemExit('{} source files are embedding file paths, see list above.'.format(failures))
-    print('No embedded file paths found')
+        raise SystemExit(
+            "{} source files are embedding file paths, see list above.".format(failures)
+        )
+    print("No embedded file paths found")
 
 
-def check_file(obj_file, idf_path):   # type: (str, bytes) -> int
+def check_file(obj_file, idf_path):  # type: (str, bytes) -> int
     failures = 0
-    with open(obj_file, 'rb') as f:
+    with open(obj_file, "rb") as f:
         elf = ELFFile(f)
         for sec in elf.iter_sections():
             # can't find a better way to filter out only sections likely to contain strings,
             # and exclude debug sections. .dram matches DRAM_STR, which links to .dram1
-            if '.rodata' in sec.name or '.dram' in sec.name:
+            if ".rodata" in sec.name or ".dram" in sec.name:
                 contents = sec.data()
                 if idf_path in contents:
-                    print('error: {} contains an unwanted __FILE__ macro'.format(obj_file))
+                    print(
+                        "error: {} contains an unwanted __FILE__ macro".format(obj_file)
+                    )
                     failures += 1
                     break
     return failures
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

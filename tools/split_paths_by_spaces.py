@@ -42,33 +42,59 @@ class PathSplitError(RuntimeError):
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--var-name', required=True, help='Name of CMake variable, for printing errors and warnings')
-    parser.add_argument('in_variable', help='Input variable, may contain a mix of spaces and semicolons as separators')
+    parser.add_argument(
+        "--var-name",
+        required=True,
+        help="Name of CMake variable, for printing errors and warnings",
+    )
+    parser.add_argument(
+        "in_variable",
+        help="Input variable, may contain a mix of spaces and semicolons as separators",
+    )
     args = parser.parse_args()
 
     # Initially split the paths by semicolons
-    semicolon_separated_parts = args.in_variable.split(';')
+    semicolon_separated_parts = args.in_variable.split(";")
 
     # Every resulting part may contain space separators. Handle each part:
     paths = []
     ctx = dict(warnings=False)
     errors = False
     for part in semicolon_separated_parts:
+
         def warning_cb(warning_str: str) -> None:
-            print('\n  '.join(
-                textwrap.wrap('Warning: in CMake variable {}: {}'.format(args.var_name, warning_str), width=120,
-                              break_on_hyphens=False)), file=sys.stderr)
-            ctx['warnings'] = True
+            print(
+                "\n  ".join(
+                    textwrap.wrap(
+                        "Warning: in CMake variable {}: {}".format(
+                            args.var_name, warning_str
+                        ),
+                        width=120,
+                        break_on_hyphens=False,
+                    )
+                ),
+                file=sys.stderr,
+            )
+            ctx["warnings"] = True
 
         try:
             paths += split_paths_by_spaces(part, warning_cb=warning_cb)
         except PathSplitError as e:
-            print('\n  '.join(textwrap.wrap('Error: in CMake variable {}: {}'.format(args.var_name, str(e)), width=120,
-                                            break_on_hyphens=False)), file=sys.stderr)
+            print(
+                "\n  ".join(
+                    textwrap.wrap(
+                        "Error: in CMake variable {}: {}".format(args.var_name, str(e)),
+                        width=120,
+                        break_on_hyphens=False,
+                    )
+                ),
+                file=sys.stderr,
+            )
             errors = True
 
-    if errors or ctx['warnings']:
-        print(textwrap.dedent("""
+    if errors or ctx["warnings"]:
+        print(
+            textwrap.dedent("""
             Note: In ESP-IDF v5.0 and later, COMPONENT_DIRS and EXTRA_COMPONENT_DIRS should be defined
                   as CMake lists, not as space separated strings.
 
@@ -104,38 +130,50 @@ def main() -> None:
 
             (If you think these variables are defined correctly in your project and this message
             is not relevant, please report this as an issue.)
-        """), file=sys.stderr)
+        """),
+            file=sys.stderr,
+        )
 
-        print('Diagnostic info: {} was invoked in {} with arguments: {}'.format(
-            sys.argv[0], os.getcwd(), sys.argv[1:]
-        ), file=sys.stderr)
+        print(
+            "Diagnostic info: {} was invoked in {} with arguments: {}".format(
+                sys.argv[0], os.getcwd(), sys.argv[1:]
+            ),
+            file=sys.stderr,
+        )
 
     if errors:
         raise SystemExit(1)
 
-    sys.stdout.write(';'.join(paths))
+    sys.stdout.write(";".join(paths))
     sys.stdout.flush()
 
 
-def split_paths_by_spaces(src: str, path_exists_cb: typing.Callable[[str], bool] = os.path.exists,
-                          warning_cb: typing.Optional[typing.Callable[[str], None]] = None) -> typing.List[str]:
-    if ' ' not in src:
+def split_paths_by_spaces(
+    src: str,
+    path_exists_cb: typing.Callable[[str], bool] = os.path.exists,
+    warning_cb: typing.Optional[typing.Callable[[str], None]] = None,
+) -> typing.List[str]:
+    if " " not in src:
         # no spaces, complete string should be the path
         return [src]
 
     def path_exists_or_empty(path: str) -> bool:
-        return path == '' or path_exists_cb(path)
+        return path == "" or path_exists_cb(path)
 
     # remove leading and trailing spaces
     delayed_warnings = []
-    trimmed = src.lstrip(' ')
+    trimmed = src.lstrip(" ")
     if trimmed != src:
-        delayed_warnings.append("Path component '{}' contains leading spaces".format(src))
+        delayed_warnings.append(
+            "Path component '{}' contains leading spaces".format(src)
+        )
     src = trimmed
 
-    trimmed = src.rstrip(' ')
+    trimmed = src.rstrip(" ")
     if trimmed != src:
-        delayed_warnings.append("Path component '{}' contains trailing spaces".format(src))
+        delayed_warnings.append(
+            "Path component '{}' contains trailing spaces".format(src)
+        )
     src = trimmed
 
     # Enumerate all possible ways to split the string src into paths by spaces.
@@ -145,10 +183,10 @@ def split_paths_by_spaces(src: str, path_exists_cb: typing.Callable[[str], bool]
     # We do this by associating every space with a bit of an integer in the range [0, 2^n - 1],
     # such that when the bit is 0 there is no split in the given space, and bit is 1 when there is a split.
 
-    parts = src.split(' ')
+    parts = src.split(" ")
     num_spaces = len(parts) - 1
     valid_ways_to_split = []
-    all_ways_to_split = [selective_join(parts, i) for i in range(2 ** num_spaces)]
+    all_ways_to_split = [selective_join(parts, i) for i in range(2**num_spaces)]
     for paths_list in all_ways_to_split:
         nonempty_paths = list(filter(bool, paths_list))
         if all(map(path_exists_or_empty, nonempty_paths)):
@@ -162,23 +200,31 @@ def split_paths_by_spaces(src: str, path_exists_cb: typing.Callable[[str], bool]
         # Report warnings
         if warning_cb:
             if len(result) > 1:
-                warning_cb("Path component '{}' contains a space separator. It was automatically split into {}".format(
-                    src, pprint.pformat(result)
-                ))
+                warning_cb(
+                    "Path component '{}' contains a space separator. It was automatically split into {}".format(
+                        src, pprint.pformat(result)
+                    )
+                )
             for w in delayed_warnings:
                 warning_cb(w)
 
         return result
 
     if num_candidates == 0:
-        raise PathSplitError(("Didn't find a valid way to split path '{}'. "
-                              'This error may be reported if one or more paths '
-                              "are separated with spaces, and at least one path doesn't exist.").format(src))
+        raise PathSplitError(
+            (
+                "Didn't find a valid way to split path '{}'. "
+                "This error may be reported if one or more paths "
+                "are separated with spaces, and at least one path doesn't exist."
+            ).format(src)
+        )
 
     # if num_candidates > 1
-    raise PathSplitError("Found more than one valid way to split path '{}':{}".format(
-        src, ''.join('\n\t- ' + pprint.pformat(p) for p in valid_ways_to_split)
-    ))
+    raise PathSplitError(
+        "Found more than one valid way to split path '{}':{}".format(
+            src, "".join("\n\t- " + pprint.pformat(p) for p in valid_ways_to_split)
+        )
+    )
 
 
 def selective_join(parts: typing.List[str], n: int) -> typing.List[str]:
@@ -201,91 +247,120 @@ def selective_join(parts: typing.List[str], n: int) -> typing.List[str]:
     concatenated = [parts[0]]
     for part in parts[1:]:
         if n & 1:
-            result.append(' '.join(concatenated))
+            result.append(" ".join(concatenated))
             concatenated = [part]
         else:
             concatenated.append(part)
         n >>= 1
     if concatenated:
-        result.append(' '.join(concatenated))
+        result.append(" ".join(concatenated))
     return result
 
 
 class HelperTests(unittest.TestCase):
     def test_selective_join(self) -> None:
-        self.assertListEqual(['a b c'], selective_join(['a', 'b', 'c'], 0b00))
-        self.assertListEqual(['a', 'b c'], selective_join(['a', 'b', 'c'], 0b01))
-        self.assertListEqual(['a b', 'c'], selective_join(['a', 'b', 'c'], 0b10))
-        self.assertListEqual(['a', 'b', 'c'], selective_join(['a', 'b', 'c'], 0b11))
+        self.assertListEqual(["a b c"], selective_join(["a", "b", "c"], 0b00))
+        self.assertListEqual(["a", "b c"], selective_join(["a", "b", "c"], 0b01))
+        self.assertListEqual(["a b", "c"], selective_join(["a", "b", "c"], 0b10))
+        self.assertListEqual(["a", "b", "c"], selective_join(["a", "b", "c"], 0b11))
 
 
 class SplitTests(unittest.TestCase):
     def test_split_paths_absolute(self) -> None:
-        self.check_paths_concatenated('/absolute/path/one', '/absolute/path/two')
+        self.check_paths_concatenated("/absolute/path/one", "/absolute/path/two")
 
     def test_split_paths_absolute_spaces(self) -> None:
-        self.check_paths_concatenated('/absolute/path with spaces')
-        self.check_paths_concatenated('/absolute/path  with   more   spaces')
-        self.check_paths_concatenated('/absolute/path with spaces/one', '/absolute/path with spaces/two')
+        self.check_paths_concatenated("/absolute/path with spaces")
+        self.check_paths_concatenated("/absolute/path  with   more   spaces")
+        self.check_paths_concatenated(
+            "/absolute/path with spaces/one", "/absolute/path with spaces/two"
+        )
 
-        self.check_paths_concatenated('/absolute/path with spaces/one',
-                                      '/absolute/path with spaces/two',
-                                      '/absolute/path with spaces/three')
+        self.check_paths_concatenated(
+            "/absolute/path with spaces/one",
+            "/absolute/path with spaces/two",
+            "/absolute/path with spaces/three",
+        )
 
     def test_split_paths_absolute_relative(self) -> None:
-        self.check_paths_concatenated('/absolute/path/one', 'two')
+        self.check_paths_concatenated("/absolute/path/one", "two")
 
     def test_split_paths_relative(self) -> None:
-        self.check_paths_concatenated('one', 'two')
+        self.check_paths_concatenated("one", "two")
 
     def test_split_paths_absolute_spaces_relative(self) -> None:
-        self.check_paths_concatenated('/absolute/path with spaces/one', 'two')
+        self.check_paths_concatenated("/absolute/path with spaces/one", "two")
 
     def test_split_paths_ambiguous(self) -> None:
-        self.check_paths_concatenated_ambiguous('/absolute/path one', 'two',
-                                                additional_paths_exist=['/absolute/path', 'one'])
+        self.check_paths_concatenated_ambiguous(
+            "/absolute/path one",
+            "two",
+            additional_paths_exist=["/absolute/path", "one"],
+        )
 
-        self.check_paths_concatenated_ambiguous('/path    ', '/path',
-                                                additional_paths_exist=['/path    /path'])
+        self.check_paths_concatenated_ambiguous(
+            "/path    ", "/path", additional_paths_exist=["/path    /path"]
+        )
 
     def test_split_paths_nonexistent(self) -> None:
-        self.check_paths_concatenated_nonexistent('one', 'two')
+        self.check_paths_concatenated_nonexistent("one", "two")
 
     def test_split_paths_extra_whitespace(self) -> None:
-        paths = ['/path']
+        paths = ["/path"]
         path_exists = self.path_exists_by_list(paths)
-        self.assertListEqual(paths, split_paths_by_spaces(' /path', path_exists_cb=path_exists))
-        self.assertListEqual(paths, split_paths_by_spaces('/path ', path_exists_cb=path_exists))
-        self.assertListEqual(paths + paths, split_paths_by_spaces('/path   /path', path_exists_cb=path_exists))
+        self.assertListEqual(
+            paths, split_paths_by_spaces(" /path", path_exists_cb=path_exists)
+        )
+        self.assertListEqual(
+            paths, split_paths_by_spaces("/path ", path_exists_cb=path_exists)
+        )
+        self.assertListEqual(
+            paths + paths,
+            split_paths_by_spaces("/path   /path", path_exists_cb=path_exists),
+        )
 
     def test_split_paths_warnings(self) -> None:
-        paths = ['/path']
-        ctx = {'warnings': []}  # type: typing.Dict[str, typing.List[str]]
+        paths = ["/path"]
+        ctx = {"warnings": []}  # type: typing.Dict[str, typing.List[str]]
 
         def add_warning(warning: str) -> None:
-            ctx['warnings'].append(warning)
+            ctx["warnings"].append(warning)
 
         path_exists = self.path_exists_by_list(paths)
 
-        self.assertListEqual(paths,
-                             split_paths_by_spaces(' /path', path_exists_cb=path_exists, warning_cb=add_warning))
-        self.assertEqual(1, len(ctx['warnings']))
-        self.assertIn('leading', ctx['warnings'][0])
+        self.assertListEqual(
+            paths,
+            split_paths_by_spaces(
+                " /path", path_exists_cb=path_exists, warning_cb=add_warning
+            ),
+        )
+        self.assertEqual(1, len(ctx["warnings"]))
+        self.assertIn("leading", ctx["warnings"][0])
 
-        ctx['warnings'] = []
-        self.assertListEqual(paths,
-                             split_paths_by_spaces('/path ', path_exists_cb=path_exists, warning_cb=add_warning))
-        self.assertEqual(1, len(ctx['warnings']))
-        self.assertIn('trailing', ctx['warnings'][0])
+        ctx["warnings"] = []
+        self.assertListEqual(
+            paths,
+            split_paths_by_spaces(
+                "/path ", path_exists_cb=path_exists, warning_cb=add_warning
+            ),
+        )
+        self.assertEqual(1, len(ctx["warnings"]))
+        self.assertIn("trailing", ctx["warnings"][0])
 
-        ctx['warnings'] = []
-        self.assertListEqual(paths + paths,
-                             split_paths_by_spaces('/path /path', path_exists_cb=path_exists, warning_cb=add_warning))
-        self.assertEqual(1, len(ctx['warnings']))
-        self.assertIn('contains a space separator', ctx['warnings'][0])
+        ctx["warnings"] = []
+        self.assertListEqual(
+            paths + paths,
+            split_paths_by_spaces(
+                "/path /path", path_exists_cb=path_exists, warning_cb=add_warning
+            ),
+        )
+        self.assertEqual(1, len(ctx["warnings"]))
+        self.assertIn("contains a space separator", ctx["warnings"][0])
 
     @staticmethod
-    def path_exists_by_list(paths_which_exist: typing.List[str]) -> typing.Callable[[str], bool]:
+    def path_exists_by_list(
+        paths_which_exist: typing.List[str],
+    ) -> typing.Callable[[str], bool]:
         """
         Returns a function to check whether a path exists, similar to os.path.exists, but instead of checking
         for files on the real filesystem it considers only the paths provided in 'paths_which_exist' argument.
@@ -298,36 +373,51 @@ class SplitTests(unittest.TestCase):
             end = len(path)
             while end > 0:
                 all_paths.add(path[0:end])
-                end = path.rfind('/', 0, end)
+                end = path.rfind("/", 0, end)
 
         def path_exists(path: str) -> bool:
             return path in all_paths
 
         return path_exists
 
-    def split_paths_concatenated_base(self, paths_to_concatentate: typing.List[str],
-                                      paths_existing: typing.List[str]) -> typing.List[str]:
-        concatenated = ' '.join(paths_to_concatentate)
+    def split_paths_concatenated_base(
+        self, paths_to_concatentate: typing.List[str], paths_existing: typing.List[str]
+    ) -> typing.List[str]:
+        concatenated = " ".join(paths_to_concatentate)
         path_exists = self.path_exists_by_list(paths_existing)
         return split_paths_by_spaces(concatenated, path_exists_cb=path_exists)
 
     def check_paths_concatenated(self, *args: str) -> None:
         paths = [*args]
-        paths_split = self.split_paths_concatenated_base(paths_to_concatentate=paths, paths_existing=paths)
+        paths_split = self.split_paths_concatenated_base(
+            paths_to_concatentate=paths, paths_existing=paths
+        )
         self.assertListEqual(paths, paths_split)
 
-    def check_paths_concatenated_ambiguous(self, *args: str,
-                                           additional_paths_exist: typing.Optional[typing.List[str]] = None) -> None:
+    def check_paths_concatenated_ambiguous(
+        self,
+        *args: str,
+        additional_paths_exist: typing.Optional[typing.List[str]] = None,
+    ) -> None:
         paths = [*args]
-        self.assertRaises(PathSplitError, self.split_paths_concatenated_base, paths_to_concatentate=paths,
-                          paths_existing=paths + (additional_paths_exist or []))
+        self.assertRaises(
+            PathSplitError,
+            self.split_paths_concatenated_base,
+            paths_to_concatentate=paths,
+            paths_existing=paths + (additional_paths_exist or []),
+        )
 
-    def check_paths_concatenated_nonexistent(self, *args: str,
-                                             additional_paths_exist: typing.List[str] = None) -> None:
+    def check_paths_concatenated_nonexistent(
+        self, *args: str, additional_paths_exist: typing.List[str] = None
+    ) -> None:
         paths = [*args]
-        self.assertRaises(PathSplitError, self.split_paths_concatenated_base, paths_to_concatentate=paths,
-                          paths_existing=additional_paths_exist)
+        self.assertRaises(
+            PathSplitError,
+            self.split_paths_concatenated_base,
+            paths_to_concatentate=paths,
+            paths_existing=additional_paths_exist,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

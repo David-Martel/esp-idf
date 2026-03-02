@@ -15,11 +15,11 @@ from pytest_embedded.dut import Dut
 @pytest.mark.esp32c61
 @pytest.mark.generic
 def test_temp_sensor_example(dut: Dut) -> None:
-    dut.expect_exact('Install temperature sensor')
-    dut.expect_exact('Enable temperature sensor')
-    dut.expect_exact('Read temperature')
-    temp_value = dut.expect(r'Temperature value (\d+\.\d+) .*', timeout=5)
+    dut.expect_exact("Install temperature sensor")
+    dut.expect_exact("Enable temperature sensor")
+    dut.expect_exact("Read temperature")
+    temp_value = dut.expect(r"Temperature value (\d+\.\d+) .*", timeout=5)
     # Because the example test only run in the normal temperature environment. So this assert range is meaningful
-    assert 0 < float(temp_value.group(1).decode('utf8')) < 50
-    temp_value = dut.expect(r'Temperature value (\d+\.\d+) .*', timeout=5)
-    assert 0 < float(temp_value.group(1).decode('utf8')) < 50
+    assert 0 < float(temp_value.group(1).decode("utf8")) < 50
+    temp_value = dut.expect(r"Temperature value (\d+\.\d+) .*", timeout=5)
+    assert 0 < float(temp_value.group(1).decode("utf8")) < 50

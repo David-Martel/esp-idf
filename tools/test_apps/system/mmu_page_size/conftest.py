@@ -19,11 +19,11 @@ class FlashBootloader(IdfSerial):
 
         :return: None
         """
-        logging.info('Flashing bootloader')
-        bootloader_path = os.path.join(binary_path, 'bootloader', 'bootloader.bin')
+        logging.info("Flashing bootloader")
+        bootloader_path = os.path.join(binary_path, "bootloader", "bootloader.bin")
         logging.info(bootloader_path)
-        offs = int(self.app.sdkconfig.get('BOOTLOADER_OFFSET_IN_FLASH', 0))
-        logging.info('bootloader offset is {0}'.format(hex(offs)))
+        offs = int(self.app.sdkconfig.get("BOOTLOADER_OFFSET_IN_FLASH", 0))
+        logging.info("bootloader offset is {0}".format(hex(offs)))
         prev_flash_files = self.app.flash_files
         flash_files = []
         flash_files.append(
@@ -39,13 +39,13 @@ class FlashBootloader(IdfSerial):
         self.app.flash_files = prev_flash_files
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def monkeypatch_module(request: FixtureRequest) -> MonkeyPatch:
     mp = MonkeyPatch()
     request.addfinalizer(mp.undo)
     return mp
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def replace_dut_class(monkeypatch_module: MonkeyPatch) -> None:
-    monkeypatch_module.setattr('pytest_embedded_idf.IdfSerial', FlashBootloader)
+    monkeypatch_module.setattr("pytest_embedded_idf.IdfSerial", FlashBootloader)

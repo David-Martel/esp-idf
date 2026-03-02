@@ -15,5 +15,5 @@ from pytest_embedded import Dut
 @pytest.mark.esp32p4
 @pytest.mark.generic
 def test_gptimer_wiegand(dut: Dut) -> None:
-    dut.expect_exact('example: Configure wiegand interface')
-    dut.expect_exact('example: send wiegand data')
+    dut.expect_exact("example: Configure wiegand interface")
+    dut.expect_exact("example: send wiegand data")

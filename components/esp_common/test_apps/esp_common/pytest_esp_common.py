@@ -9,10 +9,8 @@ from pytest_embedded import Dut
 @pytest.mark.generic
 @pytest.mark.supported_targets
 @pytest.mark.parametrize(
-    'config',
-    [
-        'default'
-    ],
+    "config",
+    ["default"],
     indirect=True,
 )
 def test_esp_common(dut: Dut) -> None:
@@ -27,9 +25,9 @@ def test_esp_common(dut: Dut) -> None:
 @pytest.mark.esp32c5
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'psram_noinit',
+        "psram_noinit",
     ],
     indirect=True,
 )
@@ -46,10 +44,8 @@ def test_esp_attr_psram_noinit(dut: Dut) -> None:
 @pytest.mark.generic
 @pytest.mark.supported_targets
 @pytest.mark.parametrize(
-    'config',
-    [
-        'psram_noinit'
-    ],
+    "config",
+    ["psram_noinit"],
     indirect=True,
 )
 def test_esp_attr_psram_noinit_multiple_stages(case_tester: Any) -> None:
@@ -64,9 +60,9 @@ def test_esp_attr_psram_noinit_multiple_stages(case_tester: Any) -> None:
 @pytest.mark.esp32c5
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'psram',
+        "psram",
     ],
     indirect=True,
 )
@@ -78,10 +74,8 @@ def test_esp_attr_psram(dut: Dut) -> None:
 @pytest.mark.esp32s2
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
-    [
-        'xip_psram_esp32s2'
-    ],
+    "config",
+    ["xip_psram_esp32s2"],
     indirect=True,
 )
 def test_esp_attr_xip_psram_esp32s2(dut: Dut) -> None:
@@ -92,10 +86,8 @@ def test_esp_attr_xip_psram_esp32s2(dut: Dut) -> None:
 @pytest.mark.esp32s3
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
-    [
-        'xip_psram_esp32s3'
-    ],
+    "config",
+    ["xip_psram_esp32s3"],
     indirect=True,
 )
 def test_esp_attr_xip_psram_esp32s3(dut: Dut) -> None:
@@ -106,10 +98,8 @@ def test_esp_attr_xip_psram_esp32s3(dut: Dut) -> None:
 @pytest.mark.esp32p4
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
-    [
-        'xip_psram_esp32p4'
-    ],
+    "config",
+    ["xip_psram_esp32p4"],
     indirect=True,
 )
 def test_esp_attr_xip_psram_esp32p4(dut: Dut) -> None:

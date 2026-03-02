@@ -6,27 +6,26 @@ import unittest
 try:
     import gen_crt_bundle
 except ImportError:
-    sys.path.append('..')
+    sys.path.append("..")
     import gen_crt_bundle
 
 
-idf_path            = os.environ['IDF_PATH']
-ca_crts_path        = idf_path + '/components/mbedtls/esp_crt_bundle/'
-test_crts_path      = idf_path + '/components/mbedtls/esp_crt_bundle/test_gen_crt_bundle/'
+idf_path = os.environ["IDF_PATH"]
+ca_crts_path = idf_path + "/components/mbedtls/esp_crt_bundle/"
+test_crts_path = idf_path + "/components/mbedtls/esp_crt_bundle/test_gen_crt_bundle/"
 
-ca_bundle_bin_file  = 'x509_crt_bundle'
+ca_bundle_bin_file = "x509_crt_bundle"
 
-der_test_file       = 'baltimore.der'
-pem_test_file       = 'entrust.pem'
-verified_der_bundle = 'baltimore_crt_bundle'
-verified_pem_bundle = 'entrust_crt_bundle'
-invalid_test_file   = 'invalid_crt.pem'
-non_ascii_file      = 'non_ascii_crt.pem'
-ca_crts_all_file    = 'cacrt_all.pem'
+der_test_file = "baltimore.der"
+pem_test_file = "entrust.pem"
+verified_der_bundle = "baltimore_crt_bundle"
+verified_pem_bundle = "entrust_crt_bundle"
+invalid_test_file = "invalid_crt.pem"
+non_ascii_file = "non_ascii_crt.pem"
+ca_crts_all_file = "cacrt_all.pem"
 
 
 class Py23TestCase(unittest.TestCase):
-
     def __init__(self, *args, **kwargs):
         super(Py23TestCase, self).__init__(*args, **kwargs)
         try:
@@ -38,7 +37,6 @@ class Py23TestCase(unittest.TestCase):
 
 
 class GenCrtBundleTests(Py23TestCase):
-
     # Verify generation from der vs known certificate
     def test_gen_from_der(self):
         bundle = gen_crt_bundle.CertificateBundle()
@@ -46,7 +44,7 @@ class GenCrtBundleTests(Py23TestCase):
 
         crt_bundle = bundle.create_bundle()
 
-        with open(test_crts_path + verified_der_bundle, 'rb') as f:
+        with open(test_crts_path + verified_der_bundle, "rb") as f:
             verified_bundle = f.read()
 
         self.assertEqual(crt_bundle, verified_bundle)
@@ -58,7 +56,7 @@ class GenCrtBundleTests(Py23TestCase):
 
         crt_bundle = bundle.create_bundle()
 
-        with open(test_crts_path + verified_pem_bundle, 'rb') as f:
+        with open(test_crts_path + verified_pem_bundle, "rb") as f:
             verified_bundle = f.read()
 
         self.assertEqual(crt_bundle, verified_bundle)
@@ -66,19 +64,19 @@ class GenCrtBundleTests(Py23TestCase):
     def test_invalid_crt_input(self):
         bundle = gen_crt_bundle.CertificateBundle()
 
-        with self.assertRaisesRegex(gen_crt_bundle.InputError, 'Invalid certificate'):
-            bundle.add_from_file(test_crts_path  + invalid_test_file)
+        with self.assertRaisesRegex(gen_crt_bundle.InputError, "Invalid certificate"):
+            bundle.add_from_file(test_crts_path + invalid_test_file)
 
         bundle_prev_len = len(bundle.certificates)
-        bundle.add_from_pem('')
+        bundle.add_from_pem("")
         self.assertEqual(len(bundle.certificates), bundle_prev_len)
 
     def test_non_ascii_crt_input(self):
         bundle = gen_crt_bundle.CertificateBundle()
 
-        bundle.add_from_file(test_crts_path  + non_ascii_file)
+        bundle.add_from_file(test_crts_path + non_ascii_file)
         self.assertTrue(len(bundle.certificates))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -13,10 +13,10 @@ from pytest_embedded import Dut
 @pytest.mark.esp32p4
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'cache_safe',
-        'release',
+        "cache_safe",
+        "release",
     ],
     indirect=True,
 )
@@ -27,10 +27,10 @@ def test_rmt(dut: Dut) -> None:
 @pytest.mark.esp32s3
 @pytest.mark.octal_psram
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'cache_safe',
-        'release',
+        "cache_safe",
+        "release",
     ],
     indirect=True,
 )

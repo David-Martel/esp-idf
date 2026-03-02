@@ -12,26 +12,28 @@ from __future__ import division, print_function, unicode_literals
 import argparse
 import sys
 
-__version__ = '1.0'
+__version__ = "1.0"
 
 quiet = False
 
 
 def generate_blanked_file(size, output_path):
-    output = b'\xFF' * size
+    output = b"\xff" * size
     try:
         stdout_binary = sys.stdout.buffer  # Python 3
     except AttributeError:
         stdout_binary = sys.stdout
-    with stdout_binary if output_path == '-' else open(output_path, 'wb') as f:
+    with stdout_binary if output_path == "-" else open(output_path, "wb") as f:
         f.write(output)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Generates an empty binary file of the required size.')
-    parser.add_argument('size', help='Size of generated the file', type=str)
+    parser = argparse.ArgumentParser(
+        description="Generates an empty binary file of the required size."
+    )
+    parser.add_argument("size", help="Size of generated the file", type=str)
 
-    parser.add_argument('output', help='Path for binary file.', nargs='?', default='-')
+    parser.add_argument("output", help="Path for binary file.", nargs="?", default="-")
     args = parser.parse_args()
 
     size = int(args.size, 0)
@@ -45,7 +47,7 @@ class InputError(RuntimeError):
         super(InputError, self).__init__(e)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         r = main()
         sys.exit(r)

@@ -10,12 +10,14 @@ TEST_SUBMENU_PATTERN_PYTEST = re.compile(rb'\s+\((\d+)\)\s+"([^"]+)"\r?\n')
 
 
 @pytest.mark.supported_targets
-@pytest.mark.temp_skip_ci(targets=['esp32c5'], reason='C5 has not supported deep sleep')  # TODO: [ESP32C5] IDF-8640, IDF-10317
+@pytest.mark.temp_skip_ci(
+    targets=["esp32c5"], reason="C5 has not supported deep sleep"
+)  # TODO: [ESP32C5] IDF-8640, IDF-10317
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'defaults',
+        "defaults",
     ],
     indirect=True,
 )
@@ -25,12 +27,14 @@ def test_app_update(dut: Dut) -> None:
 
 @pytest.mark.supported_targets
 # TODO: [ESP32C61] IDF-9245, IDF-10983
-@pytest.mark.temp_skip_ci(targets=['esp32c61'], reason='C61 has not supported deep sleep')
+@pytest.mark.temp_skip_ci(
+    targets=["esp32c61"], reason="C61 has not supported deep sleep"
+)
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'xip_psram',
+        "xip_psram",
     ],
     indirect=True,
 )
@@ -39,12 +43,14 @@ def test_app_update_xip_psram(dut: Dut) -> None:
 
 
 @pytest.mark.supported_targets
-@pytest.mark.temp_skip_ci(targets=['esp32c5'], reason='C5 has not supported deep sleep')  # TODO: [ESP32C5] IDF-8640, IDF-10317
+@pytest.mark.temp_skip_ci(
+    targets=["esp32c5"], reason="C5 has not supported deep sleep"
+)  # TODO: [ESP32C5] IDF-8640, IDF-10317
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'xip_psram_with_rom_impl',
+        "xip_psram_with_rom_impl",
     ],
     indirect=True,
 )
@@ -58,9 +64,9 @@ def test_app_update_xip_psram_rom_impl(dut: Dut) -> None:
 @pytest.mark.esp32p4
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'rollback',
+        "rollback",
     ],
     indirect=True,
 )

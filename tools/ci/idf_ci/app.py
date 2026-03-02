@@ -6,20 +6,18 @@ import typing as t
 from typing import Literal
 
 from dynamic_pipelines.constants import BINARY_SIZE_METRIC_NAME
-from idf_build_apps import App
-from idf_build_apps import CMakeApp
-from idf_build_apps import json_to_app
-from idf_ci.uploader import AppUploader
-from idf_ci.uploader import get_app_uploader
+from idf_build_apps import App, CMakeApp, json_to_app
+
+from idf_ci.uploader import AppUploader, get_app_uploader
 
 
 class IdfCMakeApp(CMakeApp):
-    uploader: t.ClassVar[t.Optional['AppUploader']] = get_app_uploader()
-    build_system: Literal['idf_cmake'] = 'idf_cmake'
+    uploader: t.ClassVar[t.Optional["AppUploader"]] = get_app_uploader()
+    build_system: Literal["idf_cmake"] = "idf_cmake"
 
     def _initialize_hook(self, **kwargs: t.Any) -> None:
         # ensure this env var exists
-        os.environ['IDF_TARGET'] = self.target
+        os.environ["IDF_TARGET"] = self.target
 
         super()._initialize_hook(**kwargs)
 
@@ -34,6 +32,7 @@ class Metrics:
     """
     Represents a metric and its values for source, target, and the differences.
     """
+
     def __init__(
         self,
         source_value: t.Optional[float] = None,
@@ -51,10 +50,10 @@ class Metrics:
         Converts the Metrics object to a dictionary.
         """
         return {
-            'source_value': self.source_value,
-            'target_value': self.target_value,
-            'difference': self.difference,
-            'difference_percentage': self.difference_percentage,
+            "source_value": self.source_value,
+            "target_value": self.target_value,
+            "difference": self.difference,
+            "difference_percentage": self.difference_percentage,
         }
 
 
@@ -67,18 +66,18 @@ class AppWithMetricsInfo(IdfCMakeApp):
 
         self.metrics = {
             metric_name: metric_data
-            for metric_name, metric_data in kwargs.get('metrics', {}).items()
+            for metric_name, metric_data in kwargs.get("metrics", {}).items()
         }
-        self.is_new_app = kwargs.get('is_new_app', False)
+        self.is_new_app = kwargs.get("is_new_app", False)
 
     class Config:
         arbitrary_types_allowed = True
 
 
 def dump_apps_to_txt(apps: t.List[App], output_filepath: str) -> None:
-    with open(output_filepath, 'w') as fw:
+    with open(output_filepath, "w") as fw:
         for app in apps:
-            fw.write(app.model_dump_json() + '\n')
+            fw.write(app.model_dump_json() + "\n")
 
 
 def import_apps_from_txt(input_filepath: str) -> t.List[App]:
@@ -89,15 +88,14 @@ def import_apps_from_txt(input_filepath: str) -> t.List[App]:
                 try:
                     apps.append(json_to_app(line, extra_classes=[IdfCMakeApp]))
                 except Exception:  # noqa
-                    print('Failed to deserialize app from line: %s' % line)
+                    print("Failed to deserialize app from line: %s" % line)
                     sys.exit(1)
 
     return apps
 
 
 def enrich_apps_with_metrics_info(
-    app_metrics_info_map: t.Dict[str, t.Dict[str, t.Any]],
-    apps: t.List[App]
+    app_metrics_info_map: t.Dict[str, t.Dict[str, t.Any]], apps: t.List[App]
 ) -> t.List[AppWithMetricsInfo]:
     def _get_full_attributes(obj: App) -> t.Dict[str, t.Any]:
         """
@@ -105,7 +103,7 @@ def enrich_apps_with_metrics_info(
         """
         attributes: t.Dict[str, t.Any] = obj.__dict__.copy()
         for attr in dir(obj):
-            if not attr.startswith('_'):  # Skip private/internal attributes
+            if not attr.startswith("_"):  # Skip private/internal attributes
                 try:
                     value = getattr(obj, attr)
                     # Include only if it's not already in __dict__
@@ -127,7 +125,7 @@ def enrich_apps_with_metrics_info(
 
     apps_with_metrics_info = []
     for app in apps:
-        key = f'{app.app_dir}_{app.config_name}_{app.target}'
+        key = f"{app.app_dir}_{app.config_name}_{app.target}"
         app_attributes = _get_full_attributes(app)
 
         metrics = {
@@ -138,17 +136,17 @@ def enrich_apps_with_metrics_info(
 
         if key in app_metrics_info_map:
             info = app_metrics_info_map[key]
-            for metric_name, metric_data in info.get('metrics', {}).items():
+            for metric_name, metric_data in info.get("metrics", {}).items():
                 metrics[metric_name] = Metrics(
-                    source_value=metric_data.get('source_value', 0),
-                    target_value=metric_data.get('target_value', 0),
-                    difference=metric_data.get('difference', 0),
-                    difference_percentage=metric_data.get('difference_percentage', 0.0),
+                    source_value=metric_data.get("source_value", 0),
+                    target_value=metric_data.get("target_value", 0),
+                    difference=metric_data.get("difference", 0),
+                    difference_percentage=metric_data.get("difference_percentage", 0.0),
                 )
 
-            is_new_app = info.get('is_new_app', False)
+            is_new_app = info.get("is_new_app", False)
 
-        app_attributes.update({'metrics': metrics, 'is_new_app': is_new_app})
+        app_attributes.update({"metrics": metrics, "is_new_app": is_new_app})
 
         apps_with_metrics_info.append(AppWithMetricsInfo(**app_attributes))
 

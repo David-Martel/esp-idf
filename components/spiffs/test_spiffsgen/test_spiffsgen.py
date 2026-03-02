@@ -10,7 +10,7 @@ try:
 except ImportError:
     pass
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 try:
     import spiffsgen
 except ImportError:
@@ -34,10 +34,10 @@ class SpiffsgenTest(unittest.TestCase):
             span_ix_len=spiffsgen.SPIFFS_SPAN_IX_LEN,
             packed=True,
             aligned=True,
-            endianness='little',
+            endianness="little",
             use_magic=True,
             use_magic_len=True,
-            aligned_obj_ix_tables=False
+            aligned_obj_ix_tables=False,
         )
 
         def make_config(**kwargs):  # type: (typing.Any) -> spiffsgen.SpiffsBuildConfig
@@ -50,21 +50,23 @@ class SpiffsgenTest(unittest.TestCase):
 
         configs = [
             make_config(),
-            make_config(use_magic_len=False, use_magic=False, aligned_obj_ix_tables=True),
+            make_config(
+                use_magic_len=False, use_magic=False, aligned_obj_ix_tables=True
+            ),
             make_config(meta_len=4, obj_name_len=16),
             make_config(block_size=8192),
-            make_config(page_size=512)
+            make_config(page_size=512),
         ]
 
         image_size = 64 * 1024
         for config in configs:
             spiffs = spiffsgen.SpiffsFS(image_size, config)
-            spiffs.create_file('/test', __file__)
+            spiffs.create_file("/test", __file__)
             image = spiffs.to_binary()
             self.assertEqual(len(image), image_size)
             # Note: it would be nice to compile spiffs for host with the given
             # config, and verify that the image is parsed correctly.
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

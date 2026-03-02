@@ -19,9 +19,12 @@ from pathlib import Path
 from typing import List
 
 # The apple apps links are not accessible from the company network for some reason
-EXCLUDE_URL_LIST = ['https://apps.apple.com/in/app/esp-ble-provisioning/id1473590141', 'https://apps.apple.com/in/app/esp-softap-provisioning/id1474040630']
+EXCLUDE_URL_LIST = [
+    "https://apps.apple.com/in/app/esp-ble-provisioning/id1473590141",
+    "https://apps.apple.com/in/app/esp-softap-provisioning/id1474040630",
+]
 
-Link = namedtuple('Link', ['file', 'url'])
+Link = namedtuple("Link", ["file", "url"])
 
 
 class ReadmeLinkError(Exception):
@@ -32,7 +35,9 @@ class ReadmeLinkError(Exception):
 
 class RelativeLinkError(ReadmeLinkError):
     def __str__(self) -> str:
-        return 'Relative link error, file - {} not found, linked from {}'.format(self.url, self.file)
+        return "Relative link error, file - {} not found, linked from {}".format(
+            self.url, self.file
+        )
 
 
 class UrlLinkError(ReadmeLinkError):
@@ -42,7 +47,9 @@ class UrlLinkError(ReadmeLinkError):
 
     def __str__(self) -> str:
         files = [str(f) for f in self.file]
-        return 'URL error, url - {} in files - {} is not accessible, request returned {}'.format(self.url, ', '.join(files), self.error_code)
+        return "URL error, url - {} in files - {} is not accessible, request returned {}".format(
+            self.url, ", ".join(files), self.error_code
+        )
 
 
 # we do not want a failed test just due to bad network conditions, for non 404 errors we simply print a warning
@@ -54,16 +61,18 @@ def check_url(url: str, files: str, timeout: float) -> None:
         if e.code == 404:
             raise UrlLinkError(files, url, str(e))
         else:
-            print('Unable to access {}, err = {}'.format(url, str(e)))
+            print("Unable to access {}, err = {}".format(url, str(e)))
     except Exception as e:
-        print('Unable to access {}, err = {}'.format(url, str(e)))
+        print("Unable to access {}, err = {}".format(url, str(e)))
 
 
 def check_web_links(web_links: defaultdict) -> List:
-
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         errors = []
-        future_to_url = {executor.submit(check_url, url, files, timeout=30): (url, files) for url, files in web_links.items()}
+        future_to_url = {
+            executor.submit(check_url, url, files, timeout=30): (url, files)
+            for url, files in web_links.items()
+        }
         for future in concurrent.futures.as_completed(future_to_url):
             try:
                 future.result()
@@ -82,36 +91,35 @@ def check_file_links(file_links: List) -> List:
         if not Path.exists(link_path):
             errors.append(RelativeLinkError(link.file, link.url))
 
-    print('Found {} errors with relative links'.format(len(errors)))
+    print("Found {} errors with relative links".format(len(errors)))
     return errors
 
 
 def get_md_links(folder: str) -> List:
-    MD_LINK_RE = r'\[.+?\]\((.+?)(#.+)?\)'
+    MD_LINK_RE = r"\[.+?\]\((.+?)(#.+)?\)"
 
-    idf_path_str = os.getenv('IDF_PATH')
+    idf_path_str = os.getenv("IDF_PATH")
     if idf_path_str is None:
         raise RuntimeError("Environment variable 'IDF_PATH' wasn't set.")
     idf_path = Path(idf_path_str)
     links = []
 
-    for path in (idf_path / folder).rglob('*.md'):
-        with path.open(encoding='utf8') as f:
+    for path in (idf_path / folder).rglob("*.md"):
+        with path.open(encoding="utf8") as f:
             content = f.read()
 
         for url in re.findall(MD_LINK_RE, content):
             link = Link(path, url[0].lstrip())
             # Ignore "local" links
-            if not link.url.startswith('#'):
+            if not link.url.startswith("#"):
                 links.append(link)
 
     return links
 
 
 def check_readme_links(args: argparse.Namespace) -> int:
-
-    links = get_md_links('examples')
-    print('Found {} links'.format(len(links)))
+    links = get_md_links("examples")
+    print("Found {} links".format(len(links)))
 
     errors = []
 
@@ -120,8 +128,8 @@ def check_readme_links(args: argparse.Namespace) -> int:
 
     # Sort links into file and web links
     for link in links:
-        if link.url.startswith('http'):
-                web_links[link.url].append(link.file)
+        if link.url.startswith("http"):
+            web_links[link.url].append(link.file)
         else:
             file_links.append(link)
 
@@ -133,17 +141,24 @@ def check_readme_links(args: argparse.Namespace) -> int:
     if not args.skip_weburl:
         errors.extend(check_web_links(web_links))
 
-    print('Found {} errors:'.format(len(errors)))
+    print("Found {} errors:".format(len(errors)))
     for e in errors:
         print(e)
 
     return 1 if len(errors) > 0 else 0
 
 
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(description='check_readme_links.py: Checks for dead links in example READMEs', prog='check_readme_links.py')
-    parser.add_argument('--skip-weburl', '-w', action='store_true', help='Skip checking of web URLs, only check links to local files')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="check_readme_links.py: Checks for dead links in example READMEs",
+        prog="check_readme_links.py",
+    )
+    parser.add_argument(
+        "--skip-weburl",
+        "-w",
+        action="store_true",
+        help="Skip checking of web URLs, only check links to local files",
+    )
     args = parser.parse_args()
 
     sys.exit(check_readme_links(args))

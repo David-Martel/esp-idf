@@ -7,5 +7,5 @@ from pytest_embedded import Dut
 @pytest.mark.esp32
 @pytest.mark.generic
 def test_nvsgen_example(dut: Dut) -> None:
-    dut.expect('Reading values from NVS', timeout=10)
-    dut.expect('Reading values from NVS done - all OK', timeout=10)
+    dut.expect("Reading values from NVS", timeout=10)
+    dut.expect("Reading values from NVS done - all OK", timeout=10)

@@ -7,4 +7,4 @@ from pytest_embedded import Dut
 @pytest.mark.esp32p4
 @pytest.mark.generic
 def test_mipi_isp_dsi(dut: Dut) -> None:
-    dut.expect_exact('Calling app_main()')
+    dut.expect_exact("Calling app_main()")

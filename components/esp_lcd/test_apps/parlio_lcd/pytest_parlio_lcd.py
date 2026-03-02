@@ -9,9 +9,9 @@ from pytest_embedded import Dut
 @pytest.mark.esp32c5
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release',
+        "release",
     ],
     indirect=True,
 )

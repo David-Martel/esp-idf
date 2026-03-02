@@ -23,7 +23,9 @@ def get_required_lfn_entries_count(lfn_full_name: str) -> int:
     E.g. "thisisverylongfilenama.txt" with length of 26 needs 2 lfn entries,
     but "thisisverylongfilenamax.txt" with 27 characters needs 3 lfn entries.
     """
-    entries_count: int = (len(lfn_full_name) + Entry.CHARS_PER_ENTRY - 1) // Entry.CHARS_PER_ENTRY
+    entries_count: int = (
+        len(lfn_full_name) + Entry.CHARS_PER_ENTRY - 1
+    ) // Entry.CHARS_PER_ENTRY
     return entries_count
 
 
@@ -35,7 +37,10 @@ def split_name_to_lfn_entries(name: str, entries: int) -> List[str]:
     E.g. 'thisisverylongfilenama.txt' would be split to ['THISISVERYLON', 'GFILENAMA.TXT'],
     in case of 'thisisverylongfilenamax.txt' - ['THISISVERYLON', 'GFILENAMAX.TX', 'T']
     """
-    return [name[i * Entry.CHARS_PER_ENTRY:(i + 1) * Entry.CHARS_PER_ENTRY] for i in range(entries)]
+    return [
+        name[i * Entry.CHARS_PER_ENTRY : (i + 1) * Entry.CHARS_PER_ENTRY]
+        for i in range(entries)
+    ]
 
 
 def split_name_to_lfn_entry_blocks(name: str) -> List[bytes]:
@@ -53,15 +58,24 @@ def split_name_to_lfn_entry_blocks(name: str) -> List[bytes]:
     Notice that since every character is coded using 2 bytes be must add 0x00 to ASCII symbols ('G' -> 'G\x00', etc.),
     since character 'T' ends in the first block, we must add '\x00\x00' after 'T\x00'.
     """
-    max_entry_size: int = Entry.LDIR_Name1_SIZE + Entry.LDIR_Name2_SIZE + Entry.LDIR_Name2_SIZE
+    max_entry_size: int = (
+        Entry.LDIR_Name1_SIZE + Entry.LDIR_Name2_SIZE + Entry.LDIR_Name2_SIZE
+    )
     assert len(name) <= max_entry_size
     blocks_: List[bytes] = [
-        convert_to_utf16_and_pad(content=name[:Entry.LDIR_Name1_SIZE],
-                                 expected_size=Entry.LDIR_Name1_SIZE),
-        convert_to_utf16_and_pad(content=name[Entry.LDIR_Name1_SIZE:Entry.LDIR_Name1_SIZE + Entry.LDIR_Name2_SIZE],
-                                 expected_size=Entry.LDIR_Name2_SIZE),
-        convert_to_utf16_and_pad(content=name[Entry.LDIR_Name1_SIZE + Entry.LDIR_Name2_SIZE:],
-                                 expected_size=Entry.LDIR_Name3_SIZE)
+        convert_to_utf16_and_pad(
+            content=name[: Entry.LDIR_Name1_SIZE], expected_size=Entry.LDIR_Name1_SIZE
+        ),
+        convert_to_utf16_and_pad(
+            content=name[
+                Entry.LDIR_Name1_SIZE : Entry.LDIR_Name1_SIZE + Entry.LDIR_Name2_SIZE
+            ],
+            expected_size=Entry.LDIR_Name2_SIZE,
+        ),
+        convert_to_utf16_and_pad(
+            content=name[Entry.LDIR_Name1_SIZE + Entry.LDIR_Name2_SIZE :],
+            expected_size=Entry.LDIR_Name3_SIZE,
+        ),
     ]
     return blocks_
 
@@ -81,7 +95,9 @@ def build_lfn_unique_entry_name_order(entities: list, lfn_entry_name: str) -> in
         if entity.name[:6] == lfn_entry_name[:6]:
             preceding_entries += 1
     if preceding_entries > MAXIMAL_FILES_SAME_PREFIX:
-        raise NoFreeClusterException('Maximal number of files with the same prefix is 127')
+        raise NoFreeClusterException(
+            "Maximal number of files with the same prefix is 127"
+        )
     return preceding_entries
 
 

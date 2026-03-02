@@ -11,7 +11,7 @@ from idf_build_apps.manifest.soc_header import SOC_HEADERS
 
 class TestLoadSocHeaders(unittest.TestCase):
     def test_targets(self) -> None:
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
         from idf_py_actions.constants import PREVIEW_TARGETS, SUPPORTED_TARGETS
 
@@ -27,5 +27,5 @@ class TestLoadSocHeaders(unittest.TestCase):
             self.assertIsNotNone(SOC_HEADERS[target])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

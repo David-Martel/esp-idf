@@ -42,12 +42,17 @@ def _prepare_source_files(env_dict, list_separator):
     def _write_source_file(config_var, config_file):
         dequoted_var = _dequote(config_var)
         if dequoted_var:
-            new_content = '\n'.join(['source "{}"'.format(path) for path in dequoted_var.split(list_separator)])
+            new_content = "\n".join(
+                [
+                    'source "{}"'.format(path)
+                    for path in dequoted_var.split(list_separator)
+                ]
+            )
         else:
-            new_content = ''
+            new_content = ""
 
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_file, "r", encoding="utf-8") as f:
                 old_content = f.read()
         except Exception:
             # File doesn't exist or other issue
@@ -57,46 +62,64 @@ def _prepare_source_files(env_dict, list_separator):
 
         if new_content != old_content:
             # write or rewrite file only if it is necessary
-            with open(config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 f.write(new_content)
 
     try:
-        _write_source_file(env_dict['COMPONENT_KCONFIGS'], env_dict['COMPONENT_KCONFIGS_SOURCE_FILE'])
-        _write_source_file(env_dict['COMPONENT_KCONFIGS_PROJBUILD'], env_dict['COMPONENT_KCONFIGS_PROJBUILD_SOURCE_FILE'])
+        _write_source_file(
+            env_dict["COMPONENT_KCONFIGS"], env_dict["COMPONENT_KCONFIGS_SOURCE_FILE"]
+        )
+        _write_source_file(
+            env_dict["COMPONENT_KCONFIGS_PROJBUILD"],
+            env_dict["COMPONENT_KCONFIGS_PROJBUILD_SOURCE_FILE"],
+        )
     except KeyError as e:
-        print('Error:', e, 'is not defined!')
+        print("Error:", e, "is not defined!")
         sys.exit(1)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Kconfig Source File Generator')
+    parser = argparse.ArgumentParser(description="Kconfig Source File Generator")
 
-    parser.add_argument('--env', action='append', default=[],
-                        help='Environment value', metavar='NAME=VAL')
+    parser.add_argument(
+        "--env",
+        action="append",
+        default=[],
+        help="Environment value",
+        metavar="NAME=VAL",
+    )
 
-    parser.add_argument('--env-file', type=argparse.FileType('r'),
-                        help='Optional file to load environment variables from. Contents '
-                             'should be a JSON object where each key/value pair is a variable.')
+    parser.add_argument(
+        "--env-file",
+        type=argparse.FileType("r"),
+        help="Optional file to load environment variables from. Contents "
+        "should be a JSON object where each key/value pair is a variable.",
+    )
 
-    parser.add_argument('--list-separator', choices=['space', 'semicolon'],
-                        default='space',
-                        help='Separator used in environment list variables (COMPONENT_KCONFIGS, COMPONENT_KCONFIGS_PROJBUILD)')
+    parser.add_argument(
+        "--list-separator",
+        choices=["space", "semicolon"],
+        default="space",
+        help="Separator used in environment list variables (COMPONENT_KCONFIGS, COMPONENT_KCONFIGS_PROJBUILD)",
+    )
 
     args = parser.parse_args()
 
     try:
-        env = dict([(name, value) for (name, value) in (e.split('=', 1) for e in args.env)])
+        env = dict(
+            [(name, value) for (name, value) in (e.split("=", 1) for e in args.env)]
+        )
     except ValueError:
-        print('--env arguments must each contain =.')
+        print("--env arguments must each contain =.")
         sys.exit(1)
 
     if args.env_file is not None:
         env.update(json.load(args.env_file))
 
-    list_separator = ';' if args.list_separator == 'semicolon' else ' '
+    list_separator = ";" if args.list_separator == "semicolon" else " "
 
     _prepare_source_files(env, list_separator)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

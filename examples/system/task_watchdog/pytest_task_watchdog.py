@@ -8,5 +8,4 @@ from pytest_embedded import Dut
 @pytest.mark.supported_targets
 @pytest.mark.generic
 def test_task_watchdog(dut: Dut) -> None:
-
-    dut.expect_exact('Example complete')
+    dut.expect_exact("Example complete")

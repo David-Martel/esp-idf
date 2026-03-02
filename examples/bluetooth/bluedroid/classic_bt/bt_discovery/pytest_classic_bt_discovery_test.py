@@ -7,4 +7,4 @@ from pytest_embedded import Dut
 @pytest.mark.esp32
 @pytest.mark.generic
 def test_bt_discovery(dut: Dut) -> None:
-    dut.expect_exact('Discovery started.')
+    dut.expect_exact("Discovery started.")

@@ -15,10 +15,10 @@ from pytest_embedded import Dut
 @pytest.mark.esp32c61
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'iram_safe',
-        'release',
+        "iram_safe",
+        "release",
     ],
     indirect=True,
 )

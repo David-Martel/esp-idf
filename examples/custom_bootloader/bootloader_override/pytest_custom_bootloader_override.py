@@ -12,8 +12,8 @@ def test_custom_bootloader_impl_example(app: IdfApp, dut: Dut) -> None:
     # Expect to read a message from the custom bootloader
     # This message is defined in the Kconfig file, retrieve it while deleting
     # leading and trailing quotes (")
-    welcome_message = app.sdkconfig['EXAMPLE_BOOTLOADER_WELCOME_MESSAGE']
+    welcome_message = app.sdkconfig["EXAMPLE_BOOTLOADER_WELCOME_MESSAGE"]
     dut.expect_exact(welcome_message)
 
     # Expect to read a message from the user application
-    dut.expect_exact('Application started!')
+    dut.expect_exact("Application started!")

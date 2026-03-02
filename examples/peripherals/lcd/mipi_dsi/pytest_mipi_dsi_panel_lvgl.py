@@ -7,4 +7,4 @@ from pytest_embedded import Dut
 @pytest.mark.esp32p4
 @pytest.mark.generic
 def test_rgb_lcd_lvgl(dut: Dut) -> None:
-    dut.expect_exact('example: Install MIPI DSI LCD control panel')
+    dut.expect_exact("example: Install MIPI DSI LCD control panel")

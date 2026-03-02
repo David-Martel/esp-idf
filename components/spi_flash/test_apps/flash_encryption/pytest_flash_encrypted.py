@@ -8,9 +8,9 @@ from pytest_embedded import Dut
 @pytest.mark.esp32c3
 @pytest.mark.flash_encryption
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release',
+        "release",
     ],
     indirect=True,
 )
@@ -21,9 +21,9 @@ def test_flash_encryption(dut: Dut) -> None:
 @pytest.mark.esp32c3
 @pytest.mark.flash_encryption
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'rom_impl',
+        "rom_impl",
     ],
     indirect=True,
 )
@@ -34,10 +34,10 @@ def test_flash_encryption_rom_impl(dut: Dut) -> None:
 @pytest.mark.esp32s3
 @pytest.mark.flash_encryption_f4r8
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release_f4r8',
-        'rom_impl',
+        "release_f4r8",
+        "rom_impl",
     ],
     indirect=True,
 )
@@ -48,9 +48,9 @@ def test_flash_encryption_f4r8(dut: Dut) -> None:
 @pytest.mark.esp32s3
 @pytest.mark.flash_encryption_f8r8
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release_f8r8',
+        "release_f8r8",
     ],
     indirect=True,
 )

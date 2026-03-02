@@ -6,6 +6,7 @@
 # protocomm endpoint with security type protocomm_security0
 
 import proto
+
 from utils import str_to_bytes
 
 from .security import Security
@@ -21,10 +22,10 @@ class Security0(Security):
     def security0_session(self, response_data):
         # protocomm security0 FSM which interprets/forms
         # protobuf packets according to present state of session
-        if (self.session_state == 0):
+        if self.session_state == 0:
             self.session_state = 1
             return self.setup0_request()
-        if (self.session_state == 1):
+        if self.session_state == 1:
             self.setup0_response(response_data)
             return None
 
@@ -34,7 +35,7 @@ class Security0(Security):
         setup_req.sec_ver = 0
         session_cmd = proto.sec0_pb2.S0SessionCmd()
         setup_req.sec0.sc.MergeFrom(session_cmd)
-        return setup_req.SerializeToString().decode('latin-1')
+        return setup_req.SerializeToString().decode("latin-1")
 
     def setup0_response(self, response_data):
         # Interpret protocomm security0 response packet
@@ -42,7 +43,7 @@ class Security0(Security):
         setup_resp.ParseFromString(str_to_bytes(response_data))
         # Check if security scheme matches
         if setup_resp.sec_ver != proto.session_pb2.SecScheme0:
-            raise RuntimeError('Incorrect security scheme')
+            raise RuntimeError("Incorrect security scheme")
 
     def encrypt_data(self, data):
         # Passive. No encryption when security0 used

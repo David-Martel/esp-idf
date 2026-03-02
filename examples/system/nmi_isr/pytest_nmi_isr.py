@@ -9,5 +9,5 @@ from pytest_embedded import Dut
 @pytest.mark.esp32s3
 @pytest.mark.generic
 def test_nmi_isr(dut: Dut) -> None:
-    dut.expect_exact('example: Start')
-    dut.expect_exact('example: Success')
+    dut.expect_exact("example: Start")
+    dut.expect_exact("example: Success")

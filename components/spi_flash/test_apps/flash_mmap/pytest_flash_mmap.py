@@ -7,9 +7,9 @@ from pytest_embedded import Dut
 @pytest.mark.supported_targets
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release',
+        "release",
     ],
     indirect=True,
 )
@@ -24,9 +24,9 @@ def test_flash_mmap(dut: Dut) -> None:
 @pytest.mark.esp32h2
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'rom_impl',
+        "rom_impl",
     ],
     indirect=True,
 )
@@ -37,9 +37,9 @@ def test_flash_mmap_rom_impl(dut: Dut) -> None:
 @pytest.mark.supported_targets
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'xip_psram',
+        "xip_psram",
     ],
     indirect=True,
 )
@@ -50,9 +50,9 @@ def test_flash_mmap_xip_psram(dut: Dut) -> None:
 @pytest.mark.supported_targets
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'xip_psram_with_rom_impl',
+        "xip_psram_with_rom_impl",
     ],
     indirect=True,
 )

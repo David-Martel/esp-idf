@@ -7,5 +7,9 @@
 import subprocess
 import sys
 
-if __name__ == '__main__':
-    sys.exit(subprocess.run([sys.executable, '-m', 'esp_idf_monitor'] + sys.argv[1:]).returncode)
+if __name__ == "__main__":
+    sys.exit(
+        subprocess.run(
+            [sys.executable, "-m", "esp_idf_monitor"] + sys.argv[1:], check=False
+        ).returncode
+    )

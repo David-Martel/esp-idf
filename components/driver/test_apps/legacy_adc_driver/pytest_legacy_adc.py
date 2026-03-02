@@ -14,9 +14,9 @@ from pytest_embedded import Dut
 @pytest.mark.esp32p4
 @pytest.mark.adc
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release',
+        "release",
     ],
     indirect=True,
 )
@@ -28,9 +28,9 @@ def test_legacy_adc(dut: Dut) -> None:
 @pytest.mark.adc
 @pytest.mark.xtal_26mhz
 @pytest.mark.parametrize(
-    'config, baud',
+    "config, baud",
     [
-        ('esp32c2_xtal26m_release', '74880'),
+        ("esp32c2_xtal26m_release", "74880"),
     ],
     indirect=True,
 )

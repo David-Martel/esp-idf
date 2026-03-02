@@ -24,8 +24,8 @@ def _strip_each_item(iterable: Iterable) -> List:
     return res
 
 
-IDF_PATH = os.getenv('IDF_PATH', os.getcwd())
-EXECUTABLE_LIST_FN = os.path.join(IDF_PATH, 'tools/ci/executable-list.txt')
+IDF_PATH = os.getenv("IDF_PATH", os.getcwd())
+EXECUTABLE_LIST_FN = os.path.join(IDF_PATH, "tools/ci/executable-list.txt")
 known_executables = _strip_each_item(open(EXECUTABLE_LIST_FN).readlines())
 
 
@@ -33,7 +33,11 @@ def check_executable_list() -> int:
     ret = 0
     for index, fn in enumerate(known_executables):
         if not os.path.exists(os.path.join(IDF_PATH, fn)):
-            print('{}:{} {} not exists. Please remove it manually'.format(EXECUTABLE_LIST_FN, index + 1, fn))
+            print(
+                "{}:{} {} not exists. Please remove it manually".format(
+                    EXECUTABLE_LIST_FN, index + 1, fn
+                )
+            )
             ret = 1
     return ret
 
@@ -54,15 +58,19 @@ def check_executables(files: List) -> int:
 
 def check() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--action', choices=['executables', 'list'], required=True,
-                        help='if "executables", pass all your executables to see if it\'s in the list.'
-                             'if "list", check if all items on your list exist')
-    parser.add_argument('filenames', nargs='*', help='Filenames to check.')
+    parser.add_argument(
+        "--action",
+        choices=["executables", "list"],
+        required=True,
+        help='if "executables", pass all your executables to see if it\'s in the list.'
+        'if "list", check if all items on your list exist',
+    )
+    parser.add_argument("filenames", nargs="*", help="Filenames to check.")
     args = parser.parse_args()
 
-    if args.action == 'executables':
+    if args.action == "executables":
         ret = check_executables(args.filenames)
-    elif args.action == 'list':
+    elif args.action == "list":
         ret = check_executable_list()
     else:
         raise ValueError
@@ -70,5 +78,5 @@ def check() -> int:
     return ret
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(check())

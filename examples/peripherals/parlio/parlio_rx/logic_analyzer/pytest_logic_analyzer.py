@@ -10,14 +10,14 @@ from pytest_embedded import Dut
 @pytest.mark.esp32p4
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'flash_stream',
+        "flash_stream",
     ],
     indirect=True,
 )
 def test_logic_analyzer_flash_stream(dut: Dut) -> None:
-    dut.expect(r'flash_fat: Probe data partition base addr: \w+ size: \w+')
-    dut.expect(r'flash_fat: flash FATFS mounted')
-    dut.expect(r'esp_probe: Dump data size reached the max dump size')
-    dut.expect(r'example: Probe finished! [0-9]+ \(\w+\) bytes dumped')
+    dut.expect(r"flash_fat: Probe data partition base addr: \w+ size: \w+")
+    dut.expect(r"flash_fat: flash FATFS mounted")
+    dut.expect(r"esp_probe: Dump data size reached the max dump size")
+    dut.expect(r"example: Probe finished! [0-9]+ \(\w+\) bytes dumped")

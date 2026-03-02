@@ -6,11 +6,11 @@ from pytest_embedded import Dut
 
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        pytest.param('single_core_esp32', marks=[pytest.mark.esp32]),
-        pytest.param('default', marks=[pytest.mark.supported_targets]),
-        pytest.param('release', marks=[pytest.mark.supported_targets]),
+        pytest.param("single_core_esp32", marks=[pytest.mark.esp32]),
+        pytest.param("default", marks=[pytest.mark.supported_targets]),
+        pytest.param("release", marks=[pytest.mark.supported_targets]),
     ],
     indirect=True,
 )

@@ -8,19 +8,21 @@ import os
 from enum import Enum
 from functools import total_ordering
 
-from pyparsing import alphas
-from pyparsing import Group
-from pyparsing import Literal
-from pyparsing import nums
-from pyparsing import OneOrMore
-from pyparsing import ParseException
-from pyparsing import Regex
-from pyparsing import rest_of_line
-from pyparsing import SkipTo
-from pyparsing import Suppress
-from pyparsing import White
-from pyparsing import Word
-from pyparsing import ZeroOrMore
+from pyparsing import (
+    Group,
+    Literal,
+    OneOrMore,
+    ParseException,
+    Regex,
+    SkipTo,
+    Suppress,
+    White,
+    Word,
+    ZeroOrMore,
+    alphas,
+    nums,
+    rest_of_line,
+)
 
 
 @total_ordering
@@ -35,7 +37,7 @@ class Entity:
     to all entities.
     """
 
-    ALL = '*'
+    ALL = "*"
 
     class Specificity(Enum):
         NONE = 0
@@ -57,17 +59,21 @@ class Entity:
         elif archive_spec and obj_spec and symbol_spec:
             self.specificity = Entity.Specificity.SYMBOL
         else:
-            raise ValueError("Invalid arguments '(%s, %s, %s)'" % (archive, obj, symbol))
+            raise ValueError(
+                "Invalid arguments '(%s, %s, %s)'" % (archive, obj, symbol)
+            )
 
         self.archive = archive
         self.obj = obj
         self.symbol = symbol
 
     def __eq__(self, other):
-        return (self.specificity.value == other.specificity.value and
-                self.archive == other.archive and
-                self.obj == other.obj and
-                self.symbol == other.symbol)
+        return (
+            self.specificity.value == other.specificity.value
+            and self.archive == other.archive
+            and self.obj == other.obj
+            and self.symbol == other.symbol
+        )
 
     def __lt__(self, other):
         res = False
@@ -75,8 +81,8 @@ class Entity:
             res = True
         elif self.specificity == other.specificity:
             for s in Entity.Specificity:
-                a = self[s] if self[s] else ''
-                b = other[s] if other[s] else ''
+                a = self[s] if self[s] else ""
+                b = other[s] if other[s] else ""
 
                 if a != b:
                     res = a < b
@@ -89,7 +95,7 @@ class Entity:
         return hash(self.__repr__())
 
     def __str__(self):
-        return '%s:%s %s' % self.__repr__()
+        return "%s:%s %s" % self.__repr__()
 
     def __repr__(self):
         return self.archive, self.obj, self.symbol
@@ -115,7 +121,7 @@ class EntityDB:
     entity exists in the collection.
     """
 
-    __info = collections.namedtuple('__info', 'filename content')
+    __info = collections.namedtuple("__info", "filename content")
 
     def __init__(self):
         self.sections = dict()
@@ -123,45 +129,66 @@ class EntityDB:
     def add_sections_info(self, sections_info_dump):
         first_line = sections_info_dump.readline()
 
-        archive_path = (Literal('In archive').suppress() +
-                        White().suppress() +
-                        # trim the colon and line ending characters from archive_path
-                        rest_of_line.set_results_name('archive_path').set_parse_action(
-                            lambda s, loc, toks: s.rstrip(':\n\r ')))
+        archive_path = (
+            Literal("In archive").suppress()
+            + White().suppress()
+            +
+            # trim the colon and line ending characters from archive_path
+            rest_of_line.set_results_name("archive_path").set_parse_action(
+                lambda s, loc, toks: s.rstrip(":\n\r ")
+            )
+        )
         parser = archive_path
 
         try:
             results = parser.parseString(first_line, parseAll=True)
         except ParseException as p:
-            raise ParseException('Parsing sections info for library ' + sections_info_dump.name + ' failed. ' + p.msg)
+            raise ParseException(
+                "Parsing sections info for library "
+                + sections_info_dump.name
+                + " failed. "
+                + p.msg
+            )
 
         archive = os.path.basename(results.archive_path)
-        self.sections[archive] = EntityDB.__info(sections_info_dump.name, sections_info_dump.read())
+        self.sections[archive] = EntityDB.__info(
+            sections_info_dump.name, sections_info_dump.read()
+        )
 
     def _get_infos_from_file(self, info):
         # {object}:  file format elf32-xtensa-le
-        object_line = SkipTo(':').set_results_name('object') + Suppress(rest_of_line)
+        object_line = SkipTo(":").set_results_name("object") + Suppress(rest_of_line)
 
         # Sections:
         # Idx Name ...
-        section_start = Suppress(Literal('Sections:'))
+        section_start = Suppress(Literal("Sections:"))
         section_header = Suppress(OneOrMore(Word(alphas)))
 
         # 00 {section} 0000000 ...
         #              CONTENTS, ALLOC, ....
-        section_entry = (Suppress(Word(nums)) + Regex(r'\.\S+') + Suppress(rest_of_line)
-                         + Suppress(ZeroOrMore(Word(alphas + '_') + Literal(',')) + Word(alphas + '_')))
+        section_entry = (
+            Suppress(Word(nums))
+            + Regex(r"\.\S+")
+            + Suppress(rest_of_line)
+            + Suppress(
+                ZeroOrMore(Word(alphas + "_") + Literal(",")) + Word(alphas + "_")
+            )
+        )
 
-        content = Group(object_line
-                        + section_start
-                        + section_header
-                        + Group(OneOrMore(section_entry)).set_results_name('sections'))
-        parser = Group(ZeroOrMore(content)).set_results_name('contents')
+        content = Group(
+            object_line
+            + section_start
+            + section_header
+            + Group(OneOrMore(section_entry)).set_results_name("sections")
+        )
+        parser = Group(ZeroOrMore(content)).set_results_name("contents")
 
         try:
             results = parser.parseString(info.content, parseAll=True)
         except ParseException as p:
-            raise ParseException('Unable to parse section info file ' + info.filename + '. ' + p.msg)
+            raise ParseException(
+                "Unable to parse section info file " + info.filename + ". " + p.msg
+            )
 
         return results
 
@@ -191,13 +218,18 @@ class EntityDB:
 
     def _match_obj(self, archive, obj):
         objs = self.get_objects(archive)
-        match_objs = (fnmatch.filter(objs, obj + '.*.o')
-                      + fnmatch.filter(objs, obj + '.o')
-                      + fnmatch.filter(objs, obj + '.*.obj')
-                      + fnmatch.filter(objs, obj + '.obj'))
+        match_objs = (
+            fnmatch.filter(objs, obj + ".*.o")
+            + fnmatch.filter(objs, obj + ".o")
+            + fnmatch.filter(objs, obj + ".*.obj")
+            + fnmatch.filter(objs, obj + ".obj")
+        )
 
         if len(match_objs) > 1:
-            raise ValueError("Multiple matches for object: '%s: %s': %s" % (archive, obj, str(match_objs)))
+            raise ValueError(
+                "Multiple matches for object: '%s: %s': %s"
+                % (archive, obj, str(match_objs))
+            )
 
         try:
             return match_objs[0]
@@ -224,7 +256,10 @@ class EntityDB:
             elif entity.specificity == Entity.Specificity.OBJ:
                 res = self._match_obj(entity.archive, entity.obj) is not None
             elif entity.specificity == Entity.Specificity.SYMBOL:
-                res = len(self._match_symbol(entity.archive, entity.obj, entity.symbol)) > 0
+                res = (
+                    len(self._match_symbol(entity.archive, entity.obj, entity.symbol))
+                    > 0
+                )
             else:
                 res = False
 

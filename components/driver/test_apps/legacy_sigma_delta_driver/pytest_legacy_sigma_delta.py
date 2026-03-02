@@ -14,10 +14,11 @@ from pytest_embedded_idf import IdfDut
 @pytest.mark.esp32p4
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release',
+        "release",
     ],
-    indirect=True)
+    indirect=True,
+)
 def test_legacy_sigma_delta(dut: IdfDut) -> None:
-    dut.run_all_single_board_cases(group='sigma_delta')
+    dut.run_all_single_board_cases(group="sigma_delta")

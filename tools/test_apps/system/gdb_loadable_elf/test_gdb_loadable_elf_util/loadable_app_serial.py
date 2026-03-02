@@ -17,11 +17,15 @@ class LoadableAppSerial(EspSerial):
     ) -> None:
         self.app = app
 
-        if not hasattr(self.app, 'target'):
-            raise ValueError(f'Idf app not parsable. Please check if it\'s valid: {self.app.binary_path}')
+        if not hasattr(self.app, "target"):
+            raise ValueError(
+                f"Idf app not parsable. Please check if it's valid: {self.app.binary_path}"
+            )
 
         if target and self.app.target and self.app.target != target:
-            raise ValueError(f'Targets do not match. App target: {self.app.target}, Cmd target: {target}.')
+            raise ValueError(
+                f"Targets do not match. App target: {self.app.target}, Cmd target: {target}."
+            )
 
         super().__init__(
             target=target or app.target,
@@ -34,14 +38,14 @@ class LoadableAppSerial(EspSerial):
     @EspSerial.use_esptool(hard_reset_after=False, no_stub=True)
     def load_ram(self) -> None:
         if not self.app.bin_file:
-            logging.error('No image file detected. Skipping load ram...')
+            logging.error("No image file detected. Skipping load ram...")
             return
 
-        f_bin_file = open(self.app.bin_file, 'rb')
+        f_bin_file = open(self.app.bin_file, "rb")
 
         default_kwargs = {
-            'filename': f_bin_file,
-            'chip': self.esp.CHIP_NAME.lower().replace('-', ''),
+            "filename": f_bin_file,
+            "chip": self.esp.CHIP_NAME.lower().replace("-", ""),
         }
 
         load_ram_args = EsptoolArgs(**default_kwargs)

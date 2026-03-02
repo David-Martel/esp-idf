@@ -14,9 +14,9 @@ import pytest
 @pytest.mark.esp32h2
 @pytest.mark.esp32p4
 @pytest.mark.generic
-def test_slave_hd_single_dev(case_tester) -> None:       # type: ignore
+def test_slave_hd_single_dev(case_tester) -> None:  # type: ignore
     for case in case_tester.test_menu:
-        if 'test_env' in case.attributes:
+        if "test_env" in case.attributes:
             continue
         case_tester.run_normal_case(case=case, reset=True)
 
@@ -31,8 +31,17 @@ def test_slave_hd_single_dev(case_tester) -> None:       # type: ignore
 @pytest.mark.esp32h2
 @pytest.mark.esp32p4
 @pytest.mark.generic_multi_device
-@pytest.mark.parametrize('count', [2,], indirect=True)
-def test_slave_hd_multi_dev(case_tester) -> None:        # type: ignore
+@pytest.mark.parametrize(
+    "count",
+    [
+        2,
+    ],
+    indirect=True,
+)
+def test_slave_hd_multi_dev(case_tester) -> None:  # type: ignore
     for case in case_tester.test_menu:
-        if case.attributes.get('test_env', 'generic_multi_device') == 'generic_multi_device':
+        if (
+            case.attributes.get("test_env", "generic_multi_device")
+            == "generic_multi_device"
+        ):
             case_tester.run_multi_dev_case(case=case, reset=True)

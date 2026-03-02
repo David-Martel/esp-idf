@@ -8,9 +8,9 @@ from pytest_embedded import Dut
 @pytest.mark.esp32c3
 @pytest.mark.i2c_oled
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release',
+        "release",
     ],
     indirect=True,
 )

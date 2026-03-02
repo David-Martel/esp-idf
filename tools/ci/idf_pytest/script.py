@@ -10,23 +10,20 @@ from pathlib import Path
 
 import pytest
 from _pytest.config import ExitCode
-from idf_build_apps import App
-from idf_build_apps import find_apps
-from idf_build_apps.constants import BuildStatus
-from idf_build_apps.constants import SUPPORTED_TARGETS
+from idf_build_apps import App, find_apps
+from idf_build_apps.constants import SUPPORTED_TARGETS, BuildStatus
 from idf_ci.app import IdfCMakeApp
-from idf_ci_utils import get_all_manifest_files
-from idf_ci_utils import IDF_PATH
-from idf_ci_utils import idf_relpath
-from idf_ci_utils import to_list
+from idf_ci_utils import IDF_PATH, get_all_manifest_files, idf_relpath, to_list
 from idf_py_actions.constants import PREVIEW_TARGETS as TOOLS_PREVIEW_TARGETS
 from idf_py_actions.constants import SUPPORTED_TARGETS as TOOLS_SUPPORTED_TARGETS
 
-from .constants import CollectMode
-from .constants import DEFAULT_BUILD_LOG_FILENAME
-from .constants import DEFAULT_CONFIG_RULES_STR
-from .constants import DEFAULT_SIZE_JSON_FILENAME
-from .constants import PytestCase
+from .constants import (
+    DEFAULT_BUILD_LOG_FILENAME,
+    DEFAULT_CONFIG_RULES_STR,
+    DEFAULT_SIZE_JSON_FILENAME,
+    CollectMode,
+    PytestCase,
+)
 from .plugin import IdfPytestEmbedded
 
 
@@ -42,7 +39,11 @@ def get_pytest_files(paths: t.List[str]) -> t.List[str]:
     pytest_scripts: t.Set[str] = set()
     for p in paths:
         path = Path(p)
-        pytest_scripts.update(str(_p) for _p in path.glob('**/pytest_*.py') if 'managed_components' not in _p.parts)
+        pytest_scripts.update(
+            str(_p)
+            for _p in path.glob("**/pytest_*.py")
+            if "managed_components" not in _p.parts
+        )
 
     return list(pytest_scripts)
 
@@ -80,34 +81,49 @@ def get_pytest_cases(
     cases: t.List[PytestCase] = []
     pytest_scripts = get_pytest_files(paths)  # type: ignore
     if not pytest_scripts:
-        print(f'WARNING: no pytest scripts found for target {target} under paths {", ".join(paths)}')
+        print(
+            f"WARNING: no pytest scripts found for target {target} under paths {', '.join(paths)}"
+        )
         return cases
 
-    def _get_pytest_cases(_target: str, _single_target_duplicate_mode: bool = False) -> t.List[PytestCase]:
-        collector = IdfPytestEmbedded(_target, config_name=config_name, single_target_duplicate_mode=_single_target_duplicate_mode, apps=apps)
+    def _get_pytest_cases(
+        _target: str, _single_target_duplicate_mode: bool = False
+    ) -> t.List[PytestCase]:
+        collector = IdfPytestEmbedded(
+            _target,
+            config_name=config_name,
+            single_target_duplicate_mode=_single_target_duplicate_mode,
+            apps=apps,
+        )
 
         with io.StringIO() as buf:
             with redirect_stdout(buf):
-                cmd = ['--collect-only', *pytest_scripts, '--target', _target, '-q']
+                cmd = ["--collect-only", *pytest_scripts, "--target", _target, "-q"]
                 if marker_expr:
-                    cmd.extend(['-m', marker_expr])
+                    cmd.extend(["-m", marker_expr])
                 if filter_expr:
-                    cmd.extend(['-k', filter_expr])
+                    cmd.extend(["-k", filter_expr])
                 res = pytest.main(cmd, plugins=[collector])
 
             if res.value != ExitCode.OK:
                 if res.value == ExitCode.NO_TESTS_COLLECTED:
-                    print(f'WARNING: no pytest app found for target {_target} under paths {", ".join(paths)}')
+                    print(
+                        f"WARNING: no pytest app found for target {_target} under paths {', '.join(paths)}"
+                    )
                 else:
                     print(buf.getvalue())
                     raise RuntimeError(
-                        f'pytest collection failed at {", ".join(paths)} with command \"{" ".join(cmd)}\"'
+                        f'pytest collection failed at {", ".join(paths)} with command "{" ".join(cmd)}"'
                     )
 
         return collector.cases  # type: ignore
 
     if target == CollectMode.ALL:
-        targets = TOOLS_SUPPORTED_TARGETS + TOOLS_PREVIEW_TARGETS + [CollectMode.MULTI_ALL_WITH_PARAM]
+        targets = (
+            TOOLS_SUPPORTED_TARGETS
+            + TOOLS_PREVIEW_TARGETS
+            + [CollectMode.MULTI_ALL_WITH_PARAM]
+        )
     else:
         targets = [target]
 
@@ -154,27 +170,30 @@ def get_all_apps(
     """
     # target could be comma separated list
     all_apps: t.List[App] = []
-    for _t in set(target.split(',')):
-        all_apps.extend(find_apps(
-            paths,
-            _t,
-            build_system=IdfCMakeApp,
-            recursive=True,
-            build_dir='build_@t_@w',
-            config_rules_str=config_rules_str or DEFAULT_CONFIG_RULES_STR,
-            build_log_filename=DEFAULT_BUILD_LOG_FILENAME,
-            size_json_filename=DEFAULT_SIZE_JSON_FILENAME,
-            check_warnings=True,
-            manifest_rootpath=IDF_PATH,
-            compare_manifest_sha_filepath=compare_manifest_sha_filepath,
-            manifest_files=get_all_manifest_files(),
-            default_build_targets=SUPPORTED_TARGETS + (extra_default_build_targets or []),
-            modified_components=modified_components,
-            modified_files=modified_files,
-            ignore_app_dependencies_components=ignore_app_dependencies_components,
-            ignore_app_dependencies_filepatterns=ignore_app_dependencies_filepatterns,
-            include_skipped_apps=True,
-        ))
+    for _t in set(target.split(",")):
+        all_apps.extend(
+            find_apps(
+                paths,
+                _t,
+                build_system=IdfCMakeApp,
+                recursive=True,
+                build_dir="build_@t_@w",
+                config_rules_str=config_rules_str or DEFAULT_CONFIG_RULES_STR,
+                build_log_filename=DEFAULT_BUILD_LOG_FILENAME,
+                size_json_filename=DEFAULT_SIZE_JSON_FILENAME,
+                check_warnings=True,
+                manifest_rootpath=IDF_PATH,
+                compare_manifest_sha_filepath=compare_manifest_sha_filepath,
+                manifest_files=get_all_manifest_files(),
+                default_build_targets=SUPPORTED_TARGETS
+                + (extra_default_build_targets or []),
+                modified_components=modified_components,
+                modified_files=modified_files,
+                ignore_app_dependencies_components=ignore_app_dependencies_components,
+                ignore_app_dependencies_filepatterns=ignore_app_dependencies_filepatterns,
+                include_skipped_apps=True,
+            )
+        )
 
     pytest_cases = get_pytest_cases(
         paths,
@@ -186,7 +205,9 @@ def get_all_apps(
     modified_pytest_cases = []
     if modified_files:
         modified_pytest_scripts = [
-            os.path.dirname(f) for f in modified_files if fnmatch.fnmatch(os.path.basename(f), 'pytest_*.py')
+            os.path.dirname(f)
+            for f in modified_files
+            if fnmatch.fnmatch(os.path.basename(f), "pytest_*.py")
         ]
         if modified_pytest_scripts:
             modified_pytest_cases = get_pytest_cases(
@@ -205,7 +226,9 @@ def get_all_apps(
     modified_pytest_app_path_tuple_dict: t.Dict[t.Tuple[str, str, str], PytestCase] = {}
     for case in modified_pytest_cases:
         for app in case.apps:
-            modified_pytest_app_path_tuple_dict[(app.path, app.target, app.config)] = case
+            modified_pytest_app_path_tuple_dict[(app.path, app.target, app.config)] = (
+                case
+            )
 
     test_related_apps: t.Set[App] = set()
     non_test_related_apps: t.Set[App] = set()
@@ -214,23 +237,31 @@ def get_all_apps(
         app_path = idf_relpath(app.app_dir)
 
         # override build_status if test script got modified
-        if case := modified_pytest_app_path_tuple_dict.get((app_path, app.target, app.config_name)):
+        if case := modified_pytest_app_path_tuple_dict.get(
+            (app_path, app.target, app.config_name)
+        ):
             test_related_apps.add(app)
             app.build_status = BuildStatus.SHOULD_BE_BUILT
             app.preserve = True
-            logging.debug('Found app: %s - required by modified test case %s', app, case.path)
+            logging.debug(
+                "Found app: %s - required by modified test case %s", app, case.path
+            )
         elif app.build_status != BuildStatus.SKIPPED:
-            if case := pytest_app_path_tuple_dict.get((app_path, app.target, app.config_name)):
+            if case := pytest_app_path_tuple_dict.get(
+                (app_path, app.target, app.config_name)
+            ):
                 test_related_apps.add(app)
                 # build or not should be decided by the build stage
                 app.preserve = True
-                logging.debug('Found test-related app: %s - required by %s', app, case.path)
+                logging.debug(
+                    "Found test-related app: %s - required by %s", app, case.path
+                )
             else:
                 non_test_related_apps.add(app)
                 app.preserve = preserve_all
-                logging.debug('Found non-test-related app: %s', app)
+                logging.debug("Found non-test-related app: %s", app)
 
-    print(f'Found {len(test_related_apps)} test-related apps')
-    print(f'Found {len(non_test_related_apps)} non-test-related apps')
+    print(f"Found {len(test_related_apps)} test-related apps")
+    print(f"Found {len(non_test_related_apps)} non-test-related apps")
 
     return test_related_apps, non_test_related_apps

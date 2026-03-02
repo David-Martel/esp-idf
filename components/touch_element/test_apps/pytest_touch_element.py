@@ -8,11 +8,8 @@ from pytest_embedded import Dut
 @pytest.mark.esp32s3
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
-    [
-        'opt_o0',
-        'opt_o2'
-    ],
+    "config",
+    ["opt_o0", "opt_o2"],
     indirect=True,
 )
 def test_touch_element(dut: Dut) -> None:

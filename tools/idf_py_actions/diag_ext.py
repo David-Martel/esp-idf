@@ -14,18 +14,12 @@ from pathlib import Path
 from string import Template
 from subprocess import run
 from tempfile import TemporaryDirectory
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import click
 import yaml
-from idf_py_actions.tools import PropertyDict
-from idf_py_actions.tools import red_print
-from idf_py_actions.tools import yellow_print
 
+from idf_py_actions.tools import PropertyDict, red_print, yellow_print
 
 # Logging levels and configurations.
 LOG_FATAL = 1
@@ -41,16 +35,16 @@ LOG_PREFIX = False
 # generated, it is moved to its final location.
 TMP_DIR = TemporaryDirectory()
 TMP_DIR_PATH = Path(TMP_DIR.name)
-TMP_DIR_REPORT_PATH = TMP_DIR_PATH / 'report'
-TMP_DIR_REPORT_REDACTED_PATH = TMP_DIR_PATH / 'redacted'
+TMP_DIR_REPORT_PATH = TMP_DIR_PATH / "report"
+TMP_DIR_REPORT_REDACTED_PATH = TMP_DIR_PATH / "redacted"
 
 # The full debug log is stored in the report directory alongside other
 # collected files.
 LOG_FILE = None
-LOG_FILE_PATH = TMP_DIR_REPORT_PATH / 'diag.log'
+LOG_FILE_PATH = TMP_DIR_REPORT_PATH / "diag.log"
 
 # Fixed path for the built-in recipes
-BUILTIN_RECIPES_PATH = Path(__file__).parent / 'diag' / 'recipes'
+BUILTIN_RECIPES_PATH = Path(__file__).parent / "diag" / "recipes"
 
 
 def cleanup() -> None:
@@ -74,12 +68,12 @@ def exception_tb() -> Optional[str]:
     in_exception = ex_type is not None
     if not in_exception:
         return None
-    ex_msg = f'exception {ex_type}:'
+    ex_msg = f"exception {ex_type}:"
     if str(ex_value):
-        ex_msg += f' {ex_value}'
-    tb = ''.join(traceback.format_tb(ex_traceback))
-    ex_msg += '\n' + tb.rstrip()
-    ex_msg = textwrap.indent(ex_msg, prefix='> ')
+        ex_msg += f" {ex_value}"
+    tb = "".join(traceback.format_tb(ex_traceback))
+    ex_msg += "\n" + tb.rstrip()
+    ex_msg = textwrap.indent(ex_msg, prefix="> ")
     return ex_msg
 
 
@@ -112,21 +106,23 @@ def log(level: int, msg: str, prefix: str) -> None:
     """
     global LOG_FILE
     if LOG_PREFIX:
-        log_prefix = f'{prefix} '
+        log_prefix = f"{prefix} "
     else:
-        log_prefix = ''
+        log_prefix = ""
 
     msg = textwrap.indent(msg, prefix=log_prefix)
 
     if LOG_FILE:
         try:
-            log_msg = textwrap.indent(msg, prefix=f'{prefix} ')
-            LOG_FILE.write(log_msg + '\n')
+            log_msg = textwrap.indent(msg, prefix=f"{prefix} ")
+            LOG_FILE.write(log_msg + "\n")
             LOG_FILE.flush()
         except Exception:
             LOG_FILE.close()
             LOG_FILE = None
-            err(f'Cannot write to log file "{LOG_FILE}". Logging to file is turned off.')
+            err(
+                f'Cannot write to log file "{LOG_FILE}". Logging to file is turned off.'
+            )
 
     if level > LOG_LEVEL:
         return
@@ -145,12 +141,12 @@ def log(level: int, msg: str, prefix: str) -> None:
 def die(msg: str) -> None:
     """Irrecoverable fatal error."""
     fatal(msg)
-    die_msg = 'ESP-IDF diagnostic command failed.'
+    die_msg = "ESP-IDF diagnostic command failed."
     if LOG_LEVEL != LOG_DEBUG:
         # If the log level for stderr is not set to debug, suggest it.
-        die_msg += f' Using the "-d/--debug" option may provide more information.'
+        die_msg += ' Using the "-d/--debug" option may provide more information.'
     # Avoid calling fatal, as it may print the exception again if present.
-    log(LOG_FATAL, die_msg, 'F')
+    log(LOG_FATAL, die_msg, "F")
     sys.exit(128)
 
 
@@ -159,8 +155,8 @@ def fatal(msg: str) -> None:
     debugging if available. Used by the die function."""
     ex_msg = exception_msg()
     if ex_msg:
-        msg += f': {ex_msg}'
-    log(LOG_FATAL, 'fatal: ' + msg, 'F')
+        msg += f": {ex_msg}"
+    log(LOG_FATAL, "fatal: " + msg, "F")
     ex_tb = exception_tb()
     if ex_tb:
         dbg(ex_tb)
@@ -171,8 +167,8 @@ def err(msg: str) -> None:
     debugging if available."""
     ex_msg = exception_msg()
     if ex_msg:
-        msg += f': {ex_msg}'
-    log(LOG_ERROR, 'error: ' + msg, 'E')
+        msg += f": {ex_msg}"
+    log(LOG_ERROR, "error: " + msg, "E")
     ex_tb = exception_tb()
     if ex_tb:
         dbg(ex_tb)
@@ -183,25 +179,22 @@ def warn(msg: str) -> None:
     debugging if available."""
     ex_msg = exception_msg()
     if ex_msg:
-        msg += f': {ex_msg}'
-    log(LOG_WARNING, 'warning: ' + msg, 'W')
+        msg += f": {ex_msg}"
+    log(LOG_WARNING, "warning: " + msg, "W")
     ex_tb = exception_tb()
     if ex_tb:
         dbg(ex_tb)
 
 
 def info(msg: str) -> None:
-    log(LOG_INFO, msg, 'I')
+    log(LOG_INFO, msg, "I")
 
 
 def dbg(msg: str) -> None:
-    log(LOG_DEBUG, msg, 'D')
+    log(LOG_DEBUG, msg, "D")
 
 
-def set_logger(debug: bool,
-               prefix: bool,
-               file: bool,
-               colors: bool) -> None:
+def set_logger(debug: bool, prefix: bool, file: bool, colors: bool) -> None:
     """Configure the logging settings for the application.
 
     Parameters:
@@ -230,7 +223,7 @@ def set_logger(debug: bool,
     if file:
         try:
             LOG_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
-            LOG_FILE = open(LOG_FILE_PATH, 'w')
+            LOG_FILE = open(LOG_FILE_PATH, "w")
         except Exception:
             err(f'Cannot open log file "{LOG_FILE}". Log file will not be generated.')
 
@@ -240,18 +233,18 @@ def diff_dirs(dir1: Path, dir2: Path) -> None:
     dir1_root_path = Path(dir1).resolve()
     dir2_root_path = Path(dir2).resolve()
     dbg(f'diff "{dir1_root_path}" to "{dir2_root_path}"')
-    for dir1_file_path in dir1_root_path.rglob('*'):
+    for dir1_file_path in dir1_root_path.rglob("*"):
         if not dir1_file_path.is_file():
             continue
         dir2_file_path = dir2_root_path / dir1_file_path.relative_to(dir1_root_path)
 
-        with open(dir1_file_path, 'r') as f1, open(dir2_file_path, 'r') as f2:
+        with open(dir1_file_path, "r") as f1, open(dir2_file_path, "r") as f2:
             diff = difflib.unified_diff(
                 f1.readlines(),
                 f2.readlines(),
                 fromfile=str(dir1_file_path.relative_to(dir1_root_path.parent)),
                 tofile=str(dir2_file_path.relative_to(dir2_root_path.parent)),
-                n=0
+                n=0,
             )
             for line in diff:
                 dbg(line.strip())
@@ -259,26 +252,26 @@ def diff_dirs(dir1: Path, dir2: Path) -> None:
 
 def redact_files(dir1: Path, dir2: Path) -> None:
     """Show differences in files between two directories."""
-    purge_path = Path(__file__).parent / 'diag' / 'purge.yml'
-    with open(purge_path, 'r') as f:
+    purge_path = Path(__file__).parent / "diag" / "purge.yml"
+    with open(purge_path, "r") as f:
         purge = yaml.safe_load(f.read())
 
     regexes: List = []
     for entry in purge:
-        regex = re.compile(entry['regex'])
-        repl = entry['repl']
+        regex = re.compile(entry["regex"])
+        repl = entry["repl"]
         regexes.append((regex, repl))
 
     dir1_root_path = Path(dir1).resolve()
     dir2_root_path = Path(dir2).resolve()
     dbg(f'redacting files in "{dir1_root_path}" into "{dir2_root_path}"')
-    for dir1_file_path in dir1_root_path.rglob('*'):
+    for dir1_file_path in dir1_root_path.rglob("*"):
         if not dir1_file_path.is_file():
             continue
         dir2_file_path = dir2_root_path / dir1_file_path.relative_to(dir1_root_path)
         dir2_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(dir1_file_path, 'r') as f1, open(dir2_file_path, 'w') as f2:
+        with open(dir1_file_path, "r") as f1, open(dir2_file_path, "w") as f2:
             data = f1.read()
             for regex, repl in regexes:
                 data = regex.sub(repl, data)
@@ -291,208 +284,299 @@ def validate_recipe(recipe: Dict) -> None:
     """Validate the loaded recipe file. This is done manually to avoid any
     dependencies and to provide more informative error messages.
     """
-    recipe_keys = ['description', 'tags', 'output', 'steps']
-    step_keys = ['name', 'cmds', 'output']
-    recipe_description = recipe.get('description')
-    recipe_tags = recipe.get('tags')
-    recipe_output = recipe.get('output')
-    recipe_steps = recipe.get('steps')
+    recipe_keys = ["description", "tags", "output", "steps"]
+    step_keys = ["name", "cmds", "output"]
+    recipe_description = recipe.get("description")
+    recipe_tags = recipe.get("tags")
+    recipe_output = recipe.get("output")
+    recipe_steps = recipe.get("steps")
 
     for key in recipe:
         if key not in recipe_keys:
             raise RuntimeError(f'Unknown recipe key "{key}", expecting "{recipe_keys}"')
 
     if not recipe_description:
-        raise RuntimeError(f'Recipe is missing "description" key')
+        raise RuntimeError('Recipe is missing "description" key')
 
     if type(recipe_description) is not str:
-        raise RuntimeError(f'Recipe "description" key is not of type "str"')
+        raise RuntimeError('Recipe "description" key is not of type "str"')
 
     if recipe_tags:
         if type(recipe_tags) is not list:
-            raise RuntimeError(f'Recipe "tags" key is not of type "list"')
+            raise RuntimeError('Recipe "tags" key is not of type "list"')
         for tag in recipe_tags:
             if type(tag) is not str:
                 raise RuntimeError(f'Recipe tag value "{tag}" is not of type "str"')
 
     if recipe_output:
         if type(recipe_output) is not str:
-            raise RuntimeError(f'Recipe "output" key is not of type "str"')
+            raise RuntimeError('Recipe "output" key is not of type "str"')
 
     if not recipe_steps:
-        raise RuntimeError(f'Recipe is missing "steps" key')
+        raise RuntimeError('Recipe is missing "steps" key')
 
     if type(recipe_steps) is not list:
-        raise RuntimeError(f'Recipe "steps" key is not of type "list"')
+        raise RuntimeError('Recipe "steps" key is not of type "list"')
 
     for step in recipe_steps:
         for key in step:
             if key not in step_keys:
-                raise RuntimeError(f'Unknown recipe step key "{key}", expecting "{step_keys}"')
+                raise RuntimeError(
+                    f'Unknown recipe step key "{key}", expecting "{step_keys}"'
+                )
 
-        step_name = step.get('name')
-        step_output = step.get('output')
-        step_cmds = step.get('cmds')
+        step_name = step.get("name")
+        step_output = step.get("output")
+        step_cmds = step.get("cmds")
 
         if not step_name:
-            raise RuntimeError(f'Recipe step is missing "name" key')
+            raise RuntimeError('Recipe step is missing "name" key')
         if type(step_name) is not str:
-            raise RuntimeError(f'Recipe step "name" key is not of type "str"')
+            raise RuntimeError('Recipe step "name" key is not of type "str"')
         if not step_cmds:
-            raise RuntimeError(f'Recipe step is missing "cmds" key')
+            raise RuntimeError('Recipe step is missing "cmds" key')
         if type(step_cmds) is not list:
-            raise RuntimeError(f'Recipe step "cmds" key is not of type "list"')
+            raise RuntimeError('Recipe step "cmds" key is not of type "list"')
         if step_output:
             if type(step_output) is not str:
-                raise RuntimeError(f'Step "output" key is not of type "str"')
+                raise RuntimeError('Step "output" key is not of type "str"')
 
         for cmd in step_cmds:
-            if 'exec' in cmd:
-                cmd_exec_keys = ['exec', 'cmd', 'output', 'stderr', 'timeout', 'append']
+            if "exec" in cmd:
+                cmd_exec_keys = ["exec", "cmd", "output", "stderr", "timeout", "append"]
 
-                exec_cmd = cmd.get('cmd')
-                output = cmd.get('output')
-                stderr = cmd.get('stderr')
-                timeout = cmd.get('timeout')
-                append = cmd.get('append')
+                exec_cmd = cmd.get("cmd")
+                output = cmd.get("output")
+                stderr = cmd.get("stderr")
+                timeout = cmd.get("timeout")
+                append = cmd.get("append")
 
                 for key in cmd:
                     if key not in cmd_exec_keys:
-                        raise RuntimeError((f'Unknown "exec" command argument "{key}" in step "{step_name}", '
-                                            f'expecting "{cmd_exec_keys}"'))
+                        raise RuntimeError(
+                            (
+                                f'Unknown "exec" command argument "{key}" in step "{step_name}", '
+                                f'expecting "{cmd_exec_keys}"'
+                            )
+                        )
 
                 # Required arguments
                 if not exec_cmd:
-                    raise RuntimeError(f'Command "exec" in step "{step_name}" is missing "cmd" argument')
+                    raise RuntimeError(
+                        f'Command "exec" in step "{step_name}" is missing "cmd" argument'
+                    )
                 if type(exec_cmd) is list:
                     for arg in exec_cmd:
                         if type(arg) is not str:
-                            raise RuntimeError((f'List entry "{arg}" in "cmd" argument for command "exec" '
-                                                f'in step "{step_name}" is not of type "str"'))
+                            raise RuntimeError(
+                                (
+                                    f'List entry "{arg}" in "cmd" argument for command "exec" '
+                                    f'in step "{step_name}" is not of type "str"'
+                                )
+                            )
                 elif type(exec_cmd) is not str:
-                    raise RuntimeError(f'Command "exec" in step "{step_name}" is not of type "list" or "str"')
+                    raise RuntimeError(
+                        f'Command "exec" in step "{step_name}" is not of type "list" or "str"'
+                    )
 
                 # Optional arguments
                 if output and type(output) is not str:
-                    raise RuntimeError(f'Argument "output" for command "exec" in step "{step_name}" is not of type "str"')
+                    raise RuntimeError(
+                        f'Argument "output" for command "exec" in step "{step_name}" is not of type "str"'
+                    )
                 if stderr and type(stderr) is not str:
-                    raise RuntimeError(f'Argument "stderr" for command "exec" in step "{step_name}" is not of type "str"')
+                    raise RuntimeError(
+                        f'Argument "stderr" for command "exec" in step "{step_name}" is not of type "str"'
+                    )
                 if timeout and type(timeout) is not int:
-                    raise RuntimeError(f'Argument "timeout" for command "exec" in step "{step_name}" is not of type "int"')
+                    raise RuntimeError(
+                        f'Argument "timeout" for command "exec" in step "{step_name}" is not of type "int"'
+                    )
                 if append and type(append) is not bool:
-                    raise RuntimeError(f'Argument "append" for command "exec" in step "{step_name}" is not of type "bool"')
+                    raise RuntimeError(
+                        f'Argument "append" for command "exec" in step "{step_name}" is not of type "bool"'
+                    )
 
-            elif 'file' in cmd:
-                cmd_file_keys = ['file', 'path', 'output']
+            elif "file" in cmd:
+                cmd_file_keys = ["file", "path", "output"]
 
-                path = cmd.get('path')
-                output = cmd.get('output')
+                path = cmd.get("path")
+                output = cmd.get("output")
 
                 for key in cmd:
                     if key not in cmd_file_keys:
-                        raise RuntimeError((f'Unknown "file" command argument "{key}" in step "{step_name}", '
-                                            f'expecting "{cmd_file_keys}"'))
+                        raise RuntimeError(
+                            (
+                                f'Unknown "file" command argument "{key}" in step "{step_name}", '
+                                f'expecting "{cmd_file_keys}"'
+                            )
+                        )
 
                 # Required arguments
                 if not path:
-                    raise RuntimeError(f'Command "file" in step "{step_name}" is missing "path" argument')
+                    raise RuntimeError(
+                        f'Command "file" in step "{step_name}" is missing "path" argument'
+                    )
                 if type(path) is not str:
-                    raise RuntimeError(f'Argument "path" for command "file" in step "{step_name}" is not of type "str"')
+                    raise RuntimeError(
+                        f'Argument "path" for command "file" in step "{step_name}" is not of type "str"'
+                    )
 
                 # Optional arguments
                 if output and type(output) is not str:
-                    raise RuntimeError(f'Argument "output" for command "file" in step "{step_name}" is not of type "str"')
+                    raise RuntimeError(
+                        f'Argument "output" for command "file" in step "{step_name}" is not of type "str"'
+                    )
 
-            elif 'env' in cmd:
-                cmd_env_keys = ['env', 'vars', 'regex', 'output', 'append']
+            elif "env" in cmd:
+                cmd_env_keys = ["env", "vars", "regex", "output", "append"]
 
-                variables = cmd.get('vars')
-                regex = cmd.get('regex')
-                output = cmd.get('output')
-                append = cmd.get('append')
+                variables = cmd.get("vars")
+                regex = cmd.get("regex")
+                output = cmd.get("output")
+                append = cmd.get("append")
 
                 for key in cmd:
                     if key not in cmd_env_keys:
-                        raise RuntimeError((f'Unknown "env" command argument "{key}" in step "{step_name}", '
-                                            f'expecting "{cmd_env_keys}"'))
+                        raise RuntimeError(
+                            (
+                                f'Unknown "env" command argument "{key}" in step "{step_name}", '
+                                f'expecting "{cmd_env_keys}"'
+                            )
+                        )
 
                 # Required arguments
                 if not variables and not regex:
-                    raise RuntimeError(f'Command "env" in step "{step_name}" is missing both "vars" and "regex" arguments')
+                    raise RuntimeError(
+                        f'Command "env" in step "{step_name}" is missing both "vars" and "regex" arguments'
+                    )
                 if variables:
                     if type(variables) is not list:
-                        raise RuntimeError(f'Argument "vars" for command "env" in step "{step_name}" is not of type "list"')
+                        raise RuntimeError(
+                            f'Argument "vars" for command "env" in step "{step_name}" is not of type "list"'
+                        )
                     for var in variables:
                         if type(var) is not str:
-                            raise RuntimeError((f'List entry "{var}" in "vars" argument for command "env" '
-                                                f'in step "{step_name}" is not of type "str"'))
+                            raise RuntimeError(
+                                (
+                                    f'List entry "{var}" in "vars" argument for command "env" '
+                                    f'in step "{step_name}" is not of type "str"'
+                                )
+                            )
                 if regex:
                     if type(regex) is not str:
-                        raise RuntimeError(f'Argument "regex" for command "env" in step "{step_name}" is not of type "str"')
+                        raise RuntimeError(
+                            f'Argument "regex" for command "env" in step "{step_name}" is not of type "str"'
+                        )
                     try:
                         re.compile(regex)
                     except re.error as e:
-                        raise RuntimeError((f'Argument "regex" for command "env" in step "{step_name}" is not '
-                                            f'a valid regular expression: {e}'))
+                        raise RuntimeError(
+                            (
+                                f'Argument "regex" for command "env" in step "{step_name}" is not '
+                                f"a valid regular expression: {e}"
+                            )
+                        )
 
                 # Optional arguments
                 if output and type(output) is not str:
-                    raise RuntimeError(f'Argument "output" for command "env" in step "{step_name}" is not of type "str"')
+                    raise RuntimeError(
+                        f'Argument "output" for command "env" in step "{step_name}" is not of type "str"'
+                    )
                 if append and type(append) is not bool:
-                    raise RuntimeError(f'Argument "append" for command "env" in step "{step_name}" is not of type "bool"')
+                    raise RuntimeError(
+                        f'Argument "append" for command "env" in step "{step_name}" is not of type "bool"'
+                    )
 
-            elif 'glob' in cmd:
-                cmd_glob_keys = ['glob', 'pattern', 'path', 'regex', 'mtime', 'recursive', 'relative', 'output']
+            elif "glob" in cmd:
+                cmd_glob_keys = [
+                    "glob",
+                    "pattern",
+                    "path",
+                    "regex",
+                    "mtime",
+                    "recursive",
+                    "relative",
+                    "output",
+                ]
 
-                pattern = cmd.get('pattern')
-                path = cmd.get('path')
-                regex = cmd.get('regex')
-                mtime = cmd.get('mtime')
-                recursive = cmd.get('recursive')
-                relative = cmd.get('relative')
-                output = cmd.get('output')
+                pattern = cmd.get("pattern")
+                path = cmd.get("path")
+                regex = cmd.get("regex")
+                mtime = cmd.get("mtime")
+                recursive = cmd.get("recursive")
+                relative = cmd.get("relative")
+                output = cmd.get("output")
 
                 for key in cmd:
                     if key not in cmd_glob_keys:
-                        raise RuntimeError((f'Unknown "glob" command argument "{key}" in step "{step_name}", '
-                                            f'expecting "{cmd_glob_keys}"'))
+                        raise RuntimeError(
+                            (
+                                f'Unknown "glob" command argument "{key}" in step "{step_name}", '
+                                f'expecting "{cmd_glob_keys}"'
+                            )
+                        )
                 # Required arguments
                 if not pattern:
-                    raise RuntimeError(f'Command "glob" in step "{step_name}" is missing "pattern" argument')
+                    raise RuntimeError(
+                        f'Command "glob" in step "{step_name}" is missing "pattern" argument'
+                    )
                 if type(pattern) is not str:
-                    raise RuntimeError(f'Argument "pattern" for command "glob" in step "{step_name}" is not of type "str"')
+                    raise RuntimeError(
+                        f'Argument "pattern" for command "glob" in step "{step_name}" is not of type "str"'
+                    )
                 if not path:
-                    raise RuntimeError(f'Command "glob" in step "{step_name}" is missing "path" argument')
+                    raise RuntimeError(
+                        f'Command "glob" in step "{step_name}" is missing "path" argument'
+                    )
                 if type(path) is not str:
-                    raise RuntimeError(f'Argument "path" for command "glob" in step "{step_name}" is not of type "str"')
+                    raise RuntimeError(
+                        f'Argument "path" for command "glob" in step "{step_name}" is not of type "str"'
+                    )
 
                 # Optional arguments
                 if regex:
                     if type(regex) is not str:
-                        raise RuntimeError(f'Argument "regex" for command "glob" in step "{step_name}" is not of type "str"')
+                        raise RuntimeError(
+                            f'Argument "regex" for command "glob" in step "{step_name}" is not of type "str"'
+                        )
                     try:
                         re.compile(regex)
                     except re.error as e:
-                        raise RuntimeError((f'Argument "regex" for command "glob" in step "{step_name}" is not '
-                                            f'a valid regular expression: {e}'))
+                        raise RuntimeError(
+                            (
+                                f'Argument "regex" for command "glob" in step "{step_name}" is not '
+                                f"a valid regular expression: {e}"
+                            )
+                        )
                 if mtime and type(mtime) is not bool:
-                    raise RuntimeError(f'Argument "mtime" for command "glob" in step "{step_name}" is not of type "bool"')
+                    raise RuntimeError(
+                        f'Argument "mtime" for command "glob" in step "{step_name}" is not of type "bool"'
+                    )
                 if recursive and type(recursive) is not bool:
-                    raise RuntimeError(f'Argument "recursive" for command "glob" in step "{step_name}" is not of type "bool"')
+                    raise RuntimeError(
+                        f'Argument "recursive" for command "glob" in step "{step_name}" is not of type "bool"'
+                    )
                 if relative and type(relative) is not bool:
-                    raise RuntimeError(f'Argument "relative" for command "glob" in step "{step_name}" is not of type "bool"')
+                    raise RuntimeError(
+                        f'Argument "relative" for command "glob" in step "{step_name}" is not of type "bool"'
+                    )
                 if output and type(output) is not str:
-                    raise RuntimeError(f'Argument "output" for command "glob" in step "{step_name}" is not of type "str"')
+                    raise RuntimeError(
+                        f'Argument "output" for command "glob" in step "{step_name}" is not of type "str"'
+                    )
 
             else:
                 raise RuntimeError(f'Unknown command "{cmd}" in step "{step_name}"')
 
 
-def get_output_path(src: Optional[str],
-                    dst: Optional[str],
-                    step: Dict,
-                    recipe: Dict,
-                    src_root: Optional[str] = None) -> Path:
+def get_output_path(
+    src: Optional[str],
+    dst: Optional[str],
+    step: Dict,
+    recipe: Dict,
+    src_root: Optional[str] = None,
+) -> Path:
     """Construct the output file path based on source, destination, and recipe output.
 
     Parameters:
@@ -520,9 +604,9 @@ def get_output_path(src: Optional[str],
     """
     dst_path = TMP_DIR_REPORT_PATH
     # recipe global output directory
-    recipe_root = recipe.get('output')
+    recipe_root = recipe.get("output")
     # step global output directory
-    step_root = step.get('output')
+    step_root = step.get("output")
 
     if recipe_root:
         dst_path = dst_path / recipe_root
@@ -532,7 +616,7 @@ def get_output_path(src: Optional[str],
 
     if dst:
         dst_path = dst_path / dst
-        if dst.endswith('/') and src:
+        if dst.endswith("/") and src:
             if src_root:
                 src_rel_path = Path(src).relative_to(src_root)
                 dst_path = dst_path / src_rel_path
@@ -546,8 +630,8 @@ def get_output_path(src: Optional[str],
 
 def cmd_file(args: Dict, step: Dict, recipe: Dict) -> None:
     """file command"""
-    src = args['path']
-    dst = args.get('output')
+    src = args["path"]
+    dst = args.get("output")
 
     dst_path = get_output_path(src, dst, step, recipe)
 
@@ -560,11 +644,11 @@ def cmd_file(args: Dict, step: Dict, recipe: Dict) -> None:
 
 def cmd_exec(args: Dict, step: Dict, recipe: Dict) -> None:
     """exec command"""
-    cmd = args['cmd']
-    stdout = args.get('output')
-    stderr = args.get('stderr')
-    timeout = args.get('timeout')
-    append = args.get('append', False)
+    cmd = args["cmd"]
+    stdout = args.get("output")
+    stderr = args.get("stderr")
+    timeout = args.get("timeout")
+    append = args.get("append", False)
 
     stdout_path = get_output_path(None, stdout, step, recipe)
     stderr_path = get_output_path(None, stderr, step, recipe)
@@ -576,7 +660,7 @@ def cmd_exec(args: Dict, step: Dict, recipe: Dict) -> None:
         shell = True
 
     try:
-        p = run(cmd, shell=shell, text=True, capture_output=True, timeout=timeout)
+        p = run(cmd, check=False, shell=shell, text=True, capture_output=True, timeout=timeout)
     except Exception:
         warn(f'Exec command "{cmd}" failed')
         return
@@ -589,7 +673,7 @@ def cmd_exec(args: Dict, step: Dict, recipe: Dict) -> None:
     if stdout and p.stdout:
         try:
             stdout_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(stdout_path, 'a' if append else 'w') as f:
+            with open(stdout_path, "a" if append else "w") as f:
                 f.write(p.stdout)
         except Exception:
             warn(f'Cannot write exec command "{cmd}" stdout to "{stdout}"')
@@ -597,7 +681,7 @@ def cmd_exec(args: Dict, step: Dict, recipe: Dict) -> None:
     if stderr and p.stderr:
         try:
             stderr_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(stderr_path, 'a' if append else 'w') as f:
+            with open(stderr_path, "a" if append else "w") as f:
                 f.write(p.stderr)
         except Exception:
             warn(f'Cannot write exec command "{cmd}" stderr to "{stderr}"')
@@ -605,10 +689,10 @@ def cmd_exec(args: Dict, step: Dict, recipe: Dict) -> None:
 
 def cmd_env(args: Dict, step: Dict, recipe: Dict) -> None:
     """env command"""
-    variables = args.get('vars', [])
-    regex_str = args.get('regex')
-    output = args.get('output')
-    append = args.get('append', False)
+    variables = args.get("vars", [])
+    regex_str = args.get("regex")
+    output = args.get("output")
+    append = args.get("append", False)
     regex = re.compile(regex_str) if regex_str else None
 
     output_path = get_output_path(None, output, step, recipe)
@@ -629,13 +713,13 @@ def cmd_env(args: Dict, step: Dict, recipe: Dict) -> None:
 
     for var in found_list:
         val = os.environ[var]
-        out_list.append(f'{var}={val}')
+        out_list.append(f"{var}={val}")
 
     if output:
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(output_path, 'a' if append else 'w') as f:
-                f.write('\n'.join(out_list))
+            with open(output_path, "a" if append else "w") as f:
+                f.write("\n".join(out_list))
         except Exception:
             warn(f'Cannot write env command output to "{output}"')
 
@@ -657,13 +741,13 @@ def get_latest_modified_file(file_paths: List[Path]) -> Optional[Path]:
 
 def cmd_glob(args: Dict, step: Dict, recipe: Dict) -> None:
     """glob command"""
-    pattern = args['pattern']
-    dir_path = Path(args['path'])
-    output = args.get('output')
-    mtime = args.get('mtime', False)
-    recursive = args.get('recursive', False)
-    relative = args.get('relative', False)
-    regex_str = args.get('regex')
+    pattern = args["pattern"]
+    dir_path = Path(args["path"])
+    output = args.get("output")
+    mtime = args.get("mtime", False)
+    recursive = args.get("recursive", False)
+    relative = args.get("relative", False)
+    regex_str = args.get("regex")
 
     try:
         if recursive:
@@ -684,7 +768,7 @@ def cmd_glob(args: Dict, step: Dict, recipe: Dict) -> None:
         regex = re.compile(regex_str, flags=re.MULTILINE)
         for file_path in file_paths:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     data = f.read()
                     match = regex.search(data)
                     if match:
@@ -693,7 +777,9 @@ def cmd_glob(args: Dict, step: Dict, recipe: Dict) -> None:
                 err(f'Failed to search for the regex "{regex_str}" in "{file_path}"')
 
         if not file_paths_match:
-            warn(f'No files with content matching regex "{regex_str}" found in "{dir_path}"')
+            warn(
+                f'No files with content matching regex "{regex_str}" found in "{dir_path}"'
+            )
             return
         file_paths = file_paths_match
 
@@ -707,7 +793,9 @@ def cmd_glob(args: Dict, step: Dict, recipe: Dict) -> None:
     for file_path in file_paths:
         # If the relative flag is enabled, save the file in the output directory while
         # maintaining the same relative path as in the source directory.
-        dst_path = get_output_path(str(file_path), output, step, recipe, str(dir_path) if relative else None)
+        dst_path = get_output_path(
+            str(file_path), output, step, recipe, str(dir_path) if relative else None
+        )
         try:
             dst_path.parent.mkdir(parents=True, exist_ok=True)
             if dst_path.is_file():
@@ -715,9 +803,11 @@ def cmd_glob(args: Dict, step: Dict, recipe: Dict) -> None:
                 # create a new name by appending numerical suffixes.
                 cnt = 1
                 while True:
-                    new_dst_path = dst_path.with_name(dst_path.name + f'.{cnt}')
+                    new_dst_path = dst_path.with_name(dst_path.name + f".{cnt}")
                     if not new_dst_path.exists():
-                        warn(f'File "{dst_path.name}" for "{file_path}" already exists. Using "{new_dst_path.name}"')
+                        warn(
+                            f'File "{dst_path.name}" for "{file_path}" already exists. Using "{new_dst_path.name}"'
+                        )
                         dst_path = new_dst_path
                         break
                     cnt += 1
@@ -729,28 +819,30 @@ def cmd_glob(args: Dict, step: Dict, recipe: Dict) -> None:
 
 def process_recipe(recipe: Dict) -> None:
     """execute commands for every stage in a recipe"""
-    for step in recipe['steps']:
-        step_name = step['name']
+    for step in recipe["steps"]:
+        step_name = step["name"]
         dbg(f'Processing step "{step_name}"')
-        print(f'* {step_name}')
-        for cmd in step['cmds']:
+        print(f"* {step_name}")
+        for cmd in step["cmds"]:
             dbg(f'cmd: "{cmd}"')
-            if 'file' in cmd:
+            if "file" in cmd:
                 cmd_file(cmd, step, recipe)
-            elif 'exec' in cmd:
+            elif "exec" in cmd:
                 cmd_exec(cmd, step, recipe)
-            elif 'env' in cmd:
+            elif "env" in cmd:
                 cmd_env(cmd, step, recipe)
-            elif 'glob' in cmd:
+            elif "glob" in cmd:
                 cmd_glob(cmd, step, recipe)
             else:
                 err(f'Unknow command "{cmd}" in step "{step_name}"')
 
 
-def get_recipes(cmdl_recipes: Optional[Tuple],
-                cmdl_tags: Optional[Tuple],
-                append: bool,
-                variables: Dict) -> Dict:
+def get_recipes(
+    cmdl_recipes: Optional[Tuple],
+    cmdl_tags: Optional[Tuple],
+    append: bool,
+    variables: Dict,
+) -> Dict:
     """Load and return a dictionary of recipes.
 
     This function retrieves recipes based on the provided command line inputs
@@ -780,7 +872,7 @@ def get_recipes(cmdl_recipes: Optional[Tuple],
     recipe_files: List = []
     recipes: Dict = {}
 
-    for recipe_path in BUILTIN_RECIPES_PATH.glob('*.yml'):
+    for recipe_path in BUILTIN_RECIPES_PATH.glob("*.yml"):
         builtin_recipe_files[recipe_path.stem] = str(recipe_path.resolve())
     dbg(f'Builtin recipes "{builtin_recipe_files}"')
 
@@ -810,7 +902,7 @@ def get_recipes(cmdl_recipes: Optional[Tuple],
     for recipe_file in recipe_files:
         dbg(f'Loading recipe file "{recipe_file}"')
         try:
-            with open(recipe_file, 'r') as f:
+            with open(recipe_file, "r") as f:
                 data = f.read()
                 formatted = Template(data).safe_substitute(**variables)
                 recipe = yaml.safe_load(formatted)
@@ -819,10 +911,10 @@ def get_recipes(cmdl_recipes: Optional[Tuple],
             die(f'Cannot load diagnostic recipe "{recipe_file}"')
 
     if cmdl_tags:
-        dbg('Filtering recipe file with tags "{}"'.format(', '.join(cmdl_tags)))
+        dbg('Filtering recipe file with tags "{}"'.format(", ".join(cmdl_tags)))
         recipes_tagged: Dict = {}
         for recipe_file, recipe in recipes.items():
-            recipe_tags = recipe.get('tags')
+            recipe_tags = recipe.get("tags")
 
             if not recipe_tags:
                 continue
@@ -835,21 +927,22 @@ def get_recipes(cmdl_recipes: Optional[Tuple],
         recipes = recipes_tagged
 
     if not recipes:
-        die(f'No recipes available')
+        die("No recipes available")
 
     return recipes
 
 
-def act_list_recipes(cmdl_recipes: Optional[Tuple],
-                     cmdl_tags: Optional[Tuple],
-                     append: bool,
-                     variables: Dict) -> None:
-
+def act_list_recipes(
+    cmdl_recipes: Optional[Tuple],
+    cmdl_tags: Optional[Tuple],
+    append: bool,
+    variables: Dict,
+) -> None:
     """Display a list of available recipes along with their details"""
     try:
         recipes = get_recipes(cmdl_recipes, cmdl_tags, append, variables)
     except Exception:
-        die(f'Unable to create list of recipe files')
+        die("Unable to create list of recipe files")
 
     for recipe_file, recipe in recipes.items():
         builtin = BUILTIN_RECIPES_PATH == Path(recipe_file).parent
@@ -861,92 +954,104 @@ def act_list_recipes(cmdl_recipes: Optional[Tuple],
             valid = False
 
         print(recipe_file)
-        print('   description: {}'.format(recipe.get('description', '')))
-        print('   short name: {}'.format(Path(recipe_file).stem if builtin else ''))
-        print('   valid: {}'.format(valid))
-        print('   builtin: {}'.format(builtin))
-        print('   tags: {}'.format(', '.join(recipe.get('tags', ''))))
+        print("   description: {}".format(recipe.get("description", "")))
+        print("   short name: {}".format(Path(recipe_file).stem if builtin else ""))
+        print("   valid: {}".format(valid))
+        print("   builtin: {}".format(builtin))
+        print("   tags: {}".format(", ".join(recipe.get("tags", ""))))
 
 
-def act_check_recipes(cmdl_recipes: Optional[Tuple],
-                      cmdl_tags: Optional[Tuple],
-                      append: bool,
-                      variables: Dict) -> None:
+def act_check_recipes(
+    cmdl_recipes: Optional[Tuple],
+    cmdl_tags: Optional[Tuple],
+    append: bool,
+    variables: Dict,
+) -> None:
     """Verify recipes"""
     try:
         recipes = get_recipes(cmdl_recipes, cmdl_tags, append, variables)
     except Exception:
-        die(f'Unable to create list of recipe files')
+        die("Unable to create list of recipe files")
 
     error = False
     for recipe_file, recipe in recipes.items():
         print(f'Checking recipe "{recipe_file}"')
         try:
             validate_recipe(recipe)
-            print('Recipe is valid')
+            print("Recipe is valid")
         except Exception:
-            err('validation failed')
-            print('Recipe is invalid.')
+            err("validation failed")
+            print("Recipe is invalid.")
             error = True
 
     if error:
-        die('Recipes validation failed')
+        die("Recipes validation failed")
 
 
 def act_zip(directory: str, output: Optional[str], force: bool) -> None:
     """Compress the report directory into a zip file"""
     archive_dir_path = Path(directory).expanduser()
-    archive_path = Path(output or directory).with_suffix('.zip').expanduser()
+    archive_path = Path(output or directory).with_suffix(".zip").expanduser()
 
     info(f'Creating archive "{archive_path}"')
 
     if not archive_dir_path.exists() or not archive_dir_path.is_dir():
-        die(f'The path "{archive_dir_path}" either does not exist or is not a directory.')
+        die(
+            f'The path "{archive_dir_path}" either does not exist or is not a directory.'
+        )
 
     if archive_path.exists():
         if not archive_path.is_file():
-            die((f'Directory entry "{archive_path}" already exists and is not a regular file. '
-                 f'Please use the --output option or remove "{archive_path}" manually.'))
+            die(
+                (
+                    f'Directory entry "{archive_path}" already exists and is not a regular file. '
+                    f'Please use the --output option or remove "{archive_path}" manually.'
+                )
+            )
         if not force:
-            die((f'Archive file "{archive_path}" already exists. '
-                 f'Please use the --output option or --force option to overwrite the existing '
-                 f'"{archive_path}" archive.'))
+            die(
+                (
+                    f'Archive file "{archive_path}" already exists. '
+                    f"Please use the --output option or --force option to overwrite the existing "
+                    f'"{archive_path}" archive.'
+                )
+            )
     try:
-        with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as f:
-            for file in archive_dir_path.rglob('*'):
-                print(f'adding: {file}')
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as f:
+            for file in archive_dir_path.rglob("*"):
+                print(f"adding: {file}")
                 f.write(file, file.relative_to(archive_dir_path.parent))
     except Exception:
         die(f'Cannot create zip archive for "{directory}" directory.')
 
-    info(f'The archive "{archive_path}" is prepared and can be included with your issue report.')
+    info(
+        f'The archive "{archive_path}" is prepared and can be included with your issue report.'
+    )
 
 
-def create(action: str,
-           ctx: click.core.Context,
-           args: PropertyDict,
-           debug: bool,
-           log_prefix: bool,
-           force: bool,
-           no_color: bool,
-           zip_directory: Optional[str],
-           list_recipes: bool,
-           check_recipes: bool,
-           cmdl_recipes: Tuple,
-           cmdl_tags: Tuple,
-           append: bool,
-           output: Optional[str]) -> None:
-
+def create(
+    action: str,
+    ctx: click.core.Context,
+    args: PropertyDict,
+    debug: bool,
+    log_prefix: bool,
+    force: bool,
+    no_color: bool,
+    zip_directory: Optional[str],
+    list_recipes: bool,
+    check_recipes: bool,
+    cmdl_recipes: Tuple,
+    cmdl_tags: Tuple,
+    append: bool,
+    output: Optional[str],
+) -> None:
     if list_recipes or check_recipes or zip_directory:
         # Generate a log file only when the report is produced.
         log_to_file = False
     else:
         log_to_file = True
 
-    set_logger(debug=debug,
-               prefix=log_prefix,
-               file=log_to_file,
-               colors=not no_color)
+    set_logger(debug=debug, prefix=log_prefix, file=log_to_file, colors=not no_color)
 
     if zip_directory:
         # Archive recipes command
@@ -959,22 +1064,22 @@ def create(action: str,
     recipe_variables: Dict = {}
 
     if project_dir:
-        recipe_variables['PROJECT_DIR'] = project_dir
+        recipe_variables["PROJECT_DIR"] = project_dir
     else:
-        warn(f'Project directory is not set')
+        warn("Project directory is not set")
 
     build_dir = args.build_dir
     if build_dir:
-        recipe_variables['BUILD_DIR'] = build_dir
+        recipe_variables["BUILD_DIR"] = build_dir
     else:
-        warn(f'Build directory is not set')
+        warn("Build directory is not set")
 
-    recipe_variables['IDF_PATH'] = os.environ['IDF_PATH']
-    recipe_variables['REPORT_DIR'] = str(TMP_DIR_REPORT_PATH)
+    recipe_variables["IDF_PATH"] = os.environ["IDF_PATH"]
+    recipe_variables["REPORT_DIR"] = str(TMP_DIR_REPORT_PATH)
 
-    dbg(f'Recipe variables: {recipe_variables}')
-    dbg(f'Project directory: {project_dir}')
-    dbg(f'Build directory: {build_dir}')
+    dbg(f"Recipe variables: {recipe_variables}")
+    dbg(f"Project directory: {project_dir}")
+    dbg(f"Build directory: {build_dir}")
 
     if list_recipes:
         # List recipes command
@@ -989,7 +1094,7 @@ def create(action: str,
     recipes: Dict = {}
 
     if not output:
-        output_dir_path = Path('idf-diag-{}'.format(uuid.uuid4())).expanduser()
+        output_dir_path = Path("idf-diag-{}".format(uuid.uuid4())).expanduser()
     else:
         output_dir_path = Path(output).expanduser()
 
@@ -1005,13 +1110,21 @@ def create(action: str,
 
     if output_dir_path_exists:
         if not output_dir_path.is_dir():
-            die((f'Directory entry "{output_dir_path}" already exists and is not a directory. '
-                 f'Please select a directory that does not exist or remove "{output_dir_path}" '
-                 f'manually.'))
+            die(
+                (
+                    f'Directory entry "{output_dir_path}" already exists and is not a directory. '
+                    f'Please select a directory that does not exist or remove "{output_dir_path}" '
+                    f"manually."
+                )
+            )
         if not force:
-            die((f'Report directory "{output_dir_path}" already exists. '
-                 f'Please select a directory that does not exist or use the "-f/--force" '
-                 f'option to delete the existing "{output_dir_path}" directory.'))
+            die(
+                (
+                    f'Report directory "{output_dir_path}" already exists. '
+                    f'Please select a directory that does not exist or use the "-f/--force" '
+                    f'option to delete the existing "{output_dir_path}" directory.'
+                )
+            )
         try:
             dbg(f'Removing existing report "{output_dir_path}" directory')
             shutil.rmtree(output_dir_path)
@@ -1022,7 +1135,7 @@ def create(action: str,
     try:
         recipes = get_recipes(cmdl_recipes, cmdl_tags, append, recipe_variables)
     except Exception:
-        die(f'Unable to create list of recipe files')
+        die("Unable to create list of recipe files")
 
     # Validate recipes
     try:
@@ -1035,14 +1148,14 @@ def create(action: str,
     # Cook recipes
     try:
         for recipe_file, recipe in recipes.items():
-            desc = recipe.get('description')
+            desc = recipe.get("description")
             dbg(f'Processing recipe "{desc} "file "{recipe_file}"')
-            print(f'{desc}')
+            print(f"{desc}")
             process_recipe(recipe)
     except Exception:
         die(f'Cannot process diagnostic file "{recipe_file}"')
 
-    dbg(f'Report is done.')
+    dbg("Report is done.")
 
     global LOG_FILE
     if LOG_FILE:
@@ -1052,95 +1165,109 @@ def create(action: str,
     try:
         redact_files(TMP_DIR_REPORT_PATH, TMP_DIR_REPORT_REDACTED_PATH)
     except Exception:
-        err(f'The redaction was unsuccessful.')
+        err("The redaction was unsuccessful.")
 
     try:
         shutil.move(TMP_DIR_REPORT_REDACTED_PATH, output_dir_path)
     except Exception:
-        die(f'Cannot move diagnostic report directory from "{TMP_DIR_REPORT_REDACTED_PATH}" to "{output_dir_path}"')
+        die(
+            f'Cannot move diagnostic report directory from "{TMP_DIR_REPORT_REDACTED_PATH}" to "{output_dir_path}"'
+        )
 
-    info((f'The report has been created in the "{output_dir_path}" directory. '
-          f'Please make sure to thoroughly check it for any sensitive information '
-          f'before sharing and remove files you do not want to share. Kindly include '
-          f'any additional files you find relevant that were not automatically added. '
-          f'Please archive the contents of the final report directory using the command:\n'
-          f'"idf.py diag --zip {output_dir_path}".'))
+    info(
+        (
+            f'The report has been created in the "{output_dir_path}" directory. '
+            f"Please make sure to thoroughly check it for any sensitive information "
+            f"before sharing and remove files you do not want to share. Kindly include "
+            f"any additional files you find relevant that were not automatically added. "
+            f"Please archive the contents of the final report directory using the command:\n"
+            f'"idf.py diag --zip {output_dir_path}".'
+        )
+    )
 
 
 def action_extensions(base_actions: Dict, project_path: str) -> Any:
     return {
-        'actions': {
-            'diag': {
-                'callback': create,
-                'help': 'Create diagnostic report.',
-                'options': [
+        "actions": {
+            "diag": {
+                "callback": create,
+                "help": "Create diagnostic report.",
+                "options": [
                     {
-                        'names': ['-d', '--debug'],
-                        'is_flag': True,
-                        'help': 'Print debug information, including exception tracebacks.',
+                        "names": ["-d", "--debug"],
+                        "is_flag": True,
+                        "help": "Print debug information, including exception tracebacks.",
                     },
                     {
-                        'names': ['--no-color'],
-                        'is_flag': True,
-                        'help': 'Do not emit ANSI color codes.',
+                        "names": ["--no-color"],
+                        "is_flag": True,
+                        "help": "Do not emit ANSI color codes.",
                     },
                     {
-                        'names': ['--log-prefix'],
-                        'is_flag': True,
-                        'help': 'Add a severity character at the beginning of log messages.',
+                        "names": ["--log-prefix"],
+                        "is_flag": True,
+                        "help": "Add a severity character at the beginning of log messages.",
                     },
                     {
-                        'names': ['-z', '--zip', 'zip_directory'],
-                        'metavar': 'PATH',
-                        'help': 'Create zip archive for diagnostic report in PATH.',
+                        "names": ["-z", "--zip", "zip_directory"],
+                        "metavar": "PATH",
+                        "help": "Create zip archive for diagnostic report in PATH.",
                     },
                     {
-                        'names': ['-l', '--list', 'list_recipes'],
-                        'is_flag': True,
-                        'help': 'Show information about available recipes.',
+                        "names": ["-l", "--list", "list_recipes"],
+                        "is_flag": True,
+                        "help": "Show information about available recipes.",
                     },
                     {
-                        'names': ['-c', '--check', 'check_recipes'],
-                        'is_flag': True,
-                        'help': 'Validate recipes.',
+                        "names": ["-c", "--check", "check_recipes"],
+                        "is_flag": True,
+                        "help": "Validate recipes.",
                     },
                     {
-                        'names': ['-r', '--recipe', 'cmdl_recipes'],
-                        'multiple': True,
-                        'metavar': 'RECIPE',
-                        'type': str,
-                        'help': ('Recipe to use. This option can be specified multiple times. '
-                                 'By default, all built-in recipes are used. RECIPE refers to '
-                                 'the recipe file path or the file name stem for built-in recipes.'),
+                        "names": ["-r", "--recipe", "cmdl_recipes"],
+                        "multiple": True,
+                        "metavar": "RECIPE",
+                        "type": str,
+                        "help": (
+                            "Recipe to use. This option can be specified multiple times. "
+                            "By default, all built-in recipes are used. RECIPE refers to "
+                            "the recipe file path or the file name stem for built-in recipes."
+                        ),
                     },
                     {
-                        'names': ['-t', '--tag', 'cmdl_tags'],
-                        'multiple': True,
-                        'metavar': 'TAG',
-                        'type': str,
-                        'help': ('Consider only recipes containing TAG. This option can be specified '
-                                 'multiple times. By default, all recipes are used. Use -l/--list-recipes '
-                                 'option to see recipe TAG information.'),
+                        "names": ["-t", "--tag", "cmdl_tags"],
+                        "multiple": True,
+                        "metavar": "TAG",
+                        "type": str,
+                        "help": (
+                            "Consider only recipes containing TAG. This option can be specified "
+                            "multiple times. By default, all recipes are used. Use -l/--list-recipes "
+                            "option to see recipe TAG information."
+                        ),
                     },
                     {
-                        'names': ['-a', '--append'],
-                        'is_flag': True,
-                        'help': ('Use recipes specified with the -r/--recipe option in '
-                                 'combination with the built-in recipes.'),
+                        "names": ["-a", "--append"],
+                        "is_flag": True,
+                        "help": (
+                            "Use recipes specified with the -r/--recipe option in "
+                            "combination with the built-in recipes."
+                        ),
                     },
                     {
-                        'names': ['-f', '--force'],
-                        'is_flag': True,
-                        'help': 'Delete the target file or directory if it already exists before creating it.',
+                        "names": ["-f", "--force"],
+                        "is_flag": True,
+                        "help": "Delete the target file or directory if it already exists before creating it.",
                     },
                     {
-                        'names': ['-o', '--output'],
-                        'metavar': 'PATH',
-                        'type': str,
-                        'help': ('Diagnostic report directory PATH or zip file archive PATH. '
-                                 'If not specified, the report-UUID is used as the report directory, '
-                                 'and the report directory specified with the --zip option with a zip '
-                                 'extension is used for the zip file archive.')
+                        "names": ["-o", "--output"],
+                        "metavar": "PATH",
+                        "type": str,
+                        "help": (
+                            "Diagnostic report directory PATH or zip file archive PATH. "
+                            "If not specified, the report-UUID is used as the report directory, "
+                            "and the report directory specified with the --zip option with a zip "
+                            "extension is used for the zip file archive."
+                        ),
                     },
                 ],
             },

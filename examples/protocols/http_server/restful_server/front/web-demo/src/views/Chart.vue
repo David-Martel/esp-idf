@@ -15,27 +15,27 @@
 
 <script>
 export default {
-  data() {
-    return {
-      timer: null
-    };
-  },
-  computed: {
-    get_chart_value() {
-      return this.$store.state.chart_value;
-    }
-  },
-  methods: {
-    updateData: function() {
-      this.$store.dispatch("update_chart_value");
-    }
-  },
-  mounted() {
-    clearInterval(this.timer);
-    this.timer = setInterval(this.updateData, 1000);
-  },
-  destroyed: function() {
-    clearInterval(this.timer);
-  }
+	data() {
+		return {
+			timer: null,
+		};
+	},
+	computed: {
+		get_chart_value() {
+			return this.$store.state.chart_value;
+		},
+	},
+	methods: {
+		updateData: function () {
+			this.$store.dispatch("update_chart_value");
+		},
+	},
+	mounted() {
+		clearInterval(this.timer);
+		this.timer = setInterval(this.updateData, 1000);
+	},
+	destroyed: function () {
+		clearInterval(this.timer);
+	},
 };
 </script>

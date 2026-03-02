@@ -13,4 +13,4 @@ def test_generic_gpio_example(
     dut: Dut, log_minimum_free_heap_size: Callable[..., None]
 ) -> None:
     log_minimum_free_heap_size()
-    dut.expect(r'cnt: \d+')
+    dut.expect(r"cnt: \d+")

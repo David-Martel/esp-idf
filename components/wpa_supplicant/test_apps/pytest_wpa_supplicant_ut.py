@@ -21,13 +21,13 @@ def test_wpa_supplicant_ut(dut: Dut) -> None:
 @pytest.mark.esp32
 @pytest.mark.wifi_two_dut
 @pytest.mark.parametrize(
-    'count',
+    "count",
     [
         2,
     ],
-    indirect=True
+    indirect=True,
 )
 def test_wpa_supplicant_ut_offchan(case_tester: CaseTester) -> None:
     for case in case_tester.test_menu:
-        if case.attributes.get('test_env') == 'wifi_two_dut':
+        if case.attributes.get("test_env") == "wifi_two_dut":
             case_tester.run_multi_dev_case(case=case, reset=True)

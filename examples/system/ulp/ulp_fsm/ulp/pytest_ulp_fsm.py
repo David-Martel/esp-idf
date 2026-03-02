@@ -13,8 +13,8 @@ from pytest_embedded import Dut
 @pytest.mark.esp32s3
 @pytest.mark.generic
 def test_example_ulp_fsm(dut: Dut) -> None:
-    dut.expect_exact('Not ULP wakeup')
-    dut.expect_exact('Entering deep sleep')
+    dut.expect_exact("Not ULP wakeup")
+    dut.expect_exact("Entering deep sleep")
 
     def generate_gpio0_events() -> None:
         for _ in range(5):
@@ -27,18 +27,32 @@ def test_example_ulp_fsm(dut: Dut) -> None:
 
     for _ in range(5):
         generate_gpio0_events()
-        dut.expect_exact('ULP wakeup, saving pulse count', timeout=5)
-        logging.info('Woke up...')
-        init_count = int(dut.expect(r'Read pulse count from NVS:\s+(\d+)', timeout=5).group(1), 10)
-        assert nvs_value in (init_count, None), ('Read count is {} and previously written value is {}'
-                                                 ''.format(init_count, nvs_value))
+        dut.expect_exact("ULP wakeup, saving pulse count", timeout=5)
+        logging.info("Woke up...")
+        init_count = int(
+            dut.expect(r"Read pulse count from NVS:\s+(\d+)", timeout=5).group(1), 10
+        )
+        assert nvs_value in (init_count, None), (
+            "Read count is {} and previously written value is {}".format(
+                init_count, nvs_value
+            )
+        )
 
-        inc = int(dut.expect(r'Pulse count from ULP:\s+(\d+)', timeout=5).group(1), 10)
-        assert inc in (5, 6), 'pulse count is {}'.format(inc)
+        inc = int(dut.expect(r"Pulse count from ULP:\s+(\d+)", timeout=5).group(1), 10)
+        assert inc in (5, 6), "pulse count is {}".format(inc)
 
-        new_count = int(dut.expect(r'Wrote updated pulse count to NVS:\s+(\d+)', timeout=5).group(1), 10)
-        assert init_count + inc == new_count, '{} + {} != {}'.format(init_count, inc, new_count)
+        new_count = int(
+            dut.expect(r"Wrote updated pulse count to NVS:\s+(\d+)", timeout=5).group(
+                1
+            ),
+            10,
+        )
+        assert init_count + inc == new_count, "{} + {} != {}".format(
+            init_count, inc, new_count
+        )
 
         nvs_value = new_count
-        logging.info('Pulse count written to NVS: {}. Entering deep sleep...'.format(nvs_value))
-        dut.expect_exact('Entering deep sleep', timeout=5)
+        logging.info(
+            "Pulse count written to NVS: {}. Entering deep sleep...".format(nvs_value)
+        )
+        dut.expect_exact("Entering deep sleep", timeout=5)

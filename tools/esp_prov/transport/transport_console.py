@@ -7,12 +7,11 @@ from .transport import Transport
 
 
 class Transport_Console(Transport):
-
     async def send_data(self, path, data, session_id=0):
-        print('Client->Device msg :', path, session_id, str_to_bytes(data).hex())
+        print("Client->Device msg :", path, session_id, str_to_bytes(data).hex())
         try:
-            resp = input('Enter device->client msg : ')
+            resp = input("Enter device->client msg : ")
         except Exception as err:
-            print('error:', err)
+            print("error:", err)
             return None
-        return bytearray.fromhex(resp).decode('latin-1')
+        return bytearray.fromhex(resp).decode("latin-1")

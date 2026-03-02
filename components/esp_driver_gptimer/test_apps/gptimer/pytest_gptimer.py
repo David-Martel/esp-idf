@@ -8,10 +8,10 @@ from pytest_embedded import Dut
 @pytest.mark.supported_targets
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'iram_safe',
-        'release',
+        "iram_safe",
+        "release",
     ],
     indirect=True,
 )
@@ -23,9 +23,9 @@ def test_gptimer(dut: Dut) -> None:
 @pytest.mark.generic
 @pytest.mark.xtal_26mhz
 @pytest.mark.parametrize(
-    'config, baud',
+    "config, baud",
     [
-        ('esp32c2_xtal26m', '74880'),
+        ("esp32c2_xtal26m", "74880"),
     ],
     indirect=True,
 )

@@ -9,4 +9,4 @@ from pytest_embedded import Dut
 @pytest.mark.esp32
 @pytest.mark.esp32c3
 def test_std_filesystem(dut: Dut) -> None:
-    dut.expect_exact('All tests passed', timeout=200)
+    dut.expect_exact("All tests passed", timeout=200)

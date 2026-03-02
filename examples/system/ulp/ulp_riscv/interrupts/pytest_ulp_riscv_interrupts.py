@@ -11,15 +11,14 @@ from pytest_embedded import Dut
 @pytest.mark.esp32s3
 @pytest.mark.generic
 def test_ulp_riscv_interrupts(dut: Dut) -> None:
-
-    dut.expect_exact('Not a ULP RISC-V wakeup, initializing it!')
-    dut.expect_exact('Entering in deep sleep')
+    dut.expect_exact("Not a ULP RISC-V wakeup, initializing it!")
+    dut.expect_exact("Entering in deep sleep")
 
     # Give the chip time to enter deepsleep and trigger a software interrupt
     time.sleep(5)
 
     # Verify if SW interrupt got triggered
-    dut.expect_exact('ULP RISC-V SW Interrupt triggered 5 times.')
+    dut.expect_exact("ULP RISC-V SW Interrupt triggered 5 times.")
 
     # Set GPIO#0 using DTR
     dut.serial.proc.setDTR(True)
@@ -27,4 +26,4 @@ def test_ulp_riscv_interrupts(dut: Dut) -> None:
     dut.serial.proc.setDTR(False)
 
     # Verify if GPIO interrupt got triggered
-    dut.expect_exact('ULP RISC-V GPIO Interrupt triggered.', timeout=5)
+    dut.expect_exact("ULP RISC-V GPIO Interrupt triggered.", timeout=5)

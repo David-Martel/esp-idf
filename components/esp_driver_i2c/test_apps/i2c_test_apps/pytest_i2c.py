@@ -7,10 +7,10 @@ from pytest_embedded import Dut
 @pytest.mark.supported_targets
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release',
-        'iram_safe',
+        "release",
+        "iram_safe",
     ],
     indirect=True,
 )
@@ -28,16 +28,31 @@ def test_i2c(dut: Dut) -> None:
 @pytest.mark.esp32s3
 @pytest.mark.generic_multi_device
 @pytest.mark.parametrize(
-    'count, config',
+    "count, config",
     [
-        (2, 'defaults',),
-        (2, 'release',),
-        (2, 'iram_safe',),
-        (2, 'slave_v2',),
+        (
+            2,
+            "defaults",
+        ),
+        (
+            2,
+            "release",
+        ),
+        (
+            2,
+            "iram_safe",
+        ),
+        (
+            2,
+            "slave_v2",
+        ),
     ],
-    indirect=True
+    indirect=True,
 )
-def test_i2c_multi_device(case_tester) -> None:        # type: ignore
+def test_i2c_multi_device(case_tester) -> None:  # type: ignore
     for case in case_tester.test_menu:
-        if case.attributes.get('test_env', 'generic_multi_device') == 'generic_multi_device':
+        if (
+            case.attributes.get("test_env", "generic_multi_device")
+            == "generic_multi_device"
+        ):
             case_tester.run_multi_dev_case(case=case, reset=True)

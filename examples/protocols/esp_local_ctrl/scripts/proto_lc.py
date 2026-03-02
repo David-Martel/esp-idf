@@ -21,13 +21,18 @@ def _load_source(name: str, path: str) -> Any:
     return module
 
 
-idf_path = os.environ['IDF_PATH']
-constants_pb2 = _load_source('constants_pb2', idf_path + '/components/protocomm/python/constants_pb2.py')
-local_ctrl_pb2 = _load_source('esp_local_ctrl_pb2', idf_path + '/components/esp_local_ctrl/python/esp_local_ctrl_pb2.py')
+idf_path = os.environ["IDF_PATH"]
+constants_pb2 = _load_source(
+    "constants_pb2", idf_path + "/components/protocomm/python/constants_pb2.py"
+)
+local_ctrl_pb2 = _load_source(
+    "esp_local_ctrl_pb2",
+    idf_path + "/components/esp_local_ctrl/python/esp_local_ctrl_pb2.py",
+)
 
 
 def to_bytes(s: str) -> bytes:
-    return bytes(s, encoding='latin-1')
+    return bytes(s, encoding="latin-1")
 
 
 def get_prop_count_request(security_ctx):
@@ -36,14 +41,14 @@ def get_prop_count_request(security_ctx):
     payload = local_ctrl_pb2.CmdGetPropertyCount()
     req.cmd_get_prop_count.MergeFrom(payload)
     enc_cmd = security_ctx.encrypt_data(req.SerializeToString())
-    return enc_cmd.decode('latin-1')
+    return enc_cmd.decode("latin-1")
 
 
 def get_prop_count_response(security_ctx, response_data):
     decrypt = security_ctx.decrypt_data(to_bytes(response_data))
     resp = local_ctrl_pb2.LocalCtrlMessage()
     resp.ParseFromString(decrypt)
-    if (resp.resp_get_prop_count.status == 0):
+    if resp.resp_get_prop_count.status == 0:
         return resp.resp_get_prop_count.count
     else:
         return 0
@@ -56,7 +61,7 @@ def get_prop_vals_request(security_ctx, indices):
     payload.indices.extend(indices)
     req.cmd_get_prop_vals.MergeFrom(payload)
     enc_cmd = security_ctx.encrypt_data(req.SerializeToString())
-    return enc_cmd.decode('latin-1')
+    return enc_cmd.decode("latin-1")
 
 
 def get_prop_vals_response(security_ctx, response_data):
@@ -64,14 +69,16 @@ def get_prop_vals_response(security_ctx, response_data):
     resp = local_ctrl_pb2.LocalCtrlMessage()
     resp.ParseFromString(decrypt)
     results = []
-    if (resp.resp_get_prop_vals.status == 0):
+    if resp.resp_get_prop_vals.status == 0:
         for prop in resp.resp_get_prop_vals.props:
-            results += [{
-                'name': prop.name,
-                'type': prop.type,
-                'flags': prop.flags,
-                'value': prop.value
-            }]
+            results += [
+                {
+                    "name": prop.name,
+                    "type": prop.type,
+                    "flags": prop.flags,
+                    "value": prop.value,
+                }
+            ]
     return results
 
 
@@ -85,11 +92,11 @@ def set_prop_vals_request(security_ctx, indices, values):
         prop.value = v
     req.cmd_set_prop_vals.MergeFrom(payload)
     enc_cmd = security_ctx.encrypt_data(req.SerializeToString())
-    return enc_cmd.decode('latin-1')
+    return enc_cmd.decode("latin-1")
 
 
 def set_prop_vals_response(security_ctx, response_data):
     decrypt = security_ctx.decrypt_data(to_bytes(response_data))
     resp = local_ctrl_pb2.LocalCtrlMessage()
     resp.ParseFromString(decrypt)
-    return (resp.resp_set_prop_vals.status == 0)
+    return resp.resp_set_prop_vals.status == 0

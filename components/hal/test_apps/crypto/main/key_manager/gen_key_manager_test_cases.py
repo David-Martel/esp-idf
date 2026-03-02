@@ -7,9 +7,7 @@ from typing import Any
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.ciphers import algorithms
-from cryptography.hazmat.primitives.ciphers import Cipher
-from cryptography.hazmat.primitives.ciphers import modes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from ecdsa.curves import NIST256p
 
 # Constants
@@ -22,7 +20,7 @@ def generate_random_key(size: int = 32) -> bytes:
 
 
 def save_key_to_file(key: bytes, filename: str) -> None:
-    with open(filename, 'wb') as file:
+    with open(filename, "wb") as file:
         file.write(key)
 
 
@@ -31,12 +29,12 @@ def key_from_file_or_generate(filename: str, size: int = 32) -> bytes:
         key = generate_random_key(size)
         save_key_to_file(key, filename)
 
-    with open(filename, 'rb') as file:
+    with open(filename, "rb") as file:
         return file.read()
 
 
 def key_to_c_format(key: bytes) -> str:
-    return ', '.join([f'0x{byte:02x}' for byte in key])
+    return ", ".join([f"0x{byte:02x}" for byte in key])
 
 
 def calculate_aes_cipher(data: bytes, key: bytes) -> Any:
@@ -45,22 +43,24 @@ def calculate_aes_cipher(data: bytes, key: bytes) -> Any:
     return encryptor.update(data) + encryptor.finalize()
 
 
-def _flash_encryption_operation_aes_xts(input_data: bytes, flash_address: int, key: bytes, do_decrypt: bool = False) -> bytes:
+def _flash_encryption_operation_aes_xts(
+    input_data: bytes, flash_address: int, key: bytes, do_decrypt: bool = False
+) -> bytes:
     backend = default_backend()
 
     indata = input_data
 
     pad_left = flash_address % 0x80
-    indata = (b'\x00' * pad_left) + indata
+    indata = (b"\x00" * pad_left) + indata
 
     pad_right = (0x80 - (len(indata) % 0x80)) % 0x80
-    indata += (b'\x00' * pad_right)
+    indata += b"\x00" * pad_right
 
-    inblocks = [indata[i:i + 0x80] for i in range(0, len(indata), 0x80)]
+    inblocks = [indata[i : i + 0x80] for i in range(0, len(indata), 0x80)]
 
-    output = b''
+    output = b""
     for inblock in inblocks:
-        tweak = struct.pack('<I', flash_address & ~0x7F) + (b'\x00' * 12)
+        tweak = struct.pack("<I", flash_address & ~0x7F) + (b"\x00" * 12)
         flash_address += 0x80
         cipher = Cipher(algorithms.AES(key), modes.XTS(tweak), backend=backend)
         encryptor = cipher.encryptor() if not do_decrypt else cipher.decryptor()
@@ -68,7 +68,7 @@ def _flash_encryption_operation_aes_xts(input_data: bytes, flash_address: int, k
         outblock = encryptor.update(inblock[::-1])
         output += outblock[::-1]
 
-    return output[pad_left:len(output) - pad_right]
+    return output[pad_left : len(output) - pad_right]
 
 
 def generate_xts_test_data(key: bytes, base_flash_address: int = 0x120000) -> list:
@@ -78,8 +78,7 @@ def generate_xts_test_data(key: bytes, base_flash_address: int = 0x120000) -> li
     flash_address = base_flash_address
     for i in range(TEST_COUNT):
         data_size = (data_size * 2) % 256
-        if (data_size < 16):
-            data_size = 16
+        data_size = max(data_size, 16)
         input_data = plaintext_data[:data_size]
         flash_address = base_flash_address + (i * 0x100)
 
@@ -89,23 +88,23 @@ def generate_xts_test_data(key: bytes, base_flash_address: int = 0x120000) -> li
 
 
 def generate_ecdsa_256_key_and_pub_key(filename: str) -> tuple:
-    with open(filename, 'rb') as f:
-        private_number = int.from_bytes(f.read(), byteorder='big')
+    with open(filename, "rb") as f:
+        private_number = int.from_bytes(f.read(), byteorder="big")
 
     private_key = ec.derive_private_key(private_number, ec.SECP256R1())
     pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()
+        encryption_algorithm=serialization.NoEncryption(),
     )
 
-    with open('ecdsa_256_key.pem', 'wb') as pem_file:
+    with open("ecdsa_256_key.pem", "wb") as pem_file:
         pem_file.write(pem)
 
     public_key = private_key.public_key()
     pub_numbers = public_key.public_numbers()
-    pubx = pub_numbers.x.to_bytes(32, byteorder='little')
-    puby = pub_numbers.y.to_bytes(32, byteorder='little')
+    pubx = pub_numbers.x.to_bytes(32, byteorder="little")
+    puby = pub_numbers.y.to_bytes(32, byteorder="little")
 
     return pubx, puby
 
@@ -119,10 +118,10 @@ def perform_ecc_point_multiplication(k1_int: int) -> Any:
 def generate_k1_G(key_file_path: str) -> tuple:
     k1_G = []
     if os.path.exists(key_file_path):
-        with open(key_file_path, 'rb') as key_file:
+        with open(key_file_path, "rb") as key_file:
             k1_bytes = key_file.read()
 
-        k1_int = int.from_bytes(k1_bytes, byteorder='big')
+        k1_int = int.from_bytes(k1_bytes, byteorder="big")
         k1_G_point = perform_ecc_point_multiplication(k1_int)
         k1_G = k1_G_point.to_bytes()[:64]
 
@@ -134,11 +133,20 @@ def generate_k1_G(key_file_path: str) -> tuple:
     return k1_G, k1_G
 
 
-def write_to_c_header(init_key: bytes, k1: bytes, k2_info: bytes, k1_encrypted_32: list,
-                      test_data_xts_aes_128: list, k1_encrypted_64: list,
-                      xts_test_data_xts_aes_256: list, pubx: bytes,
-                      puby: bytes, k1_G_0: bytes, k1_G_1: bytes) -> None:
-    with open('key_manager_test_cases.h', 'w', encoding='utf-8') as file:
+def write_to_c_header(
+    init_key: bytes,
+    k1: bytes,
+    k2_info: bytes,
+    k1_encrypted_32: list,
+    test_data_xts_aes_128: list,
+    k1_encrypted_64: list,
+    xts_test_data_xts_aes_256: list,
+    pubx: bytes,
+    puby: bytes,
+    k1_G_0: bytes,
+    k1_G_1: bytes,
+) -> None:
+    with open("key_manager_test_cases.h", "w", encoding="utf-8") as file:
         header_content = """#include <stdint.h>
 
 #define TEST_COUNT 5
@@ -176,25 +184,32 @@ test_data_aes_mode_t test_data_xts_aes_128 = {
     .k1_encrypted = { { %s }, {  } },
     .plaintext_data = { %s },
     .xts_test_data = {
-""" % (key_to_c_format(init_key), key_to_c_format(k2_info), key_to_c_format(k1_encrypted_32[0]), key_to_c_format(bytes(range(1, 129))))
+""" % (
+            key_to_c_format(init_key),
+            key_to_c_format(k2_info),
+            key_to_c_format(k1_encrypted_32[0]),
+            key_to_c_format(bytes(range(1, 129))),
+        )
 
         for data_size, flash_address, ciphertext in test_data_xts_aes_128:
-            header_content += f'\t\t{{.data_size = {data_size}, .data_offset = 0x{flash_address:x}, .ciphertext = {{{key_to_c_format(ciphertext)}}}}},\n'
-        header_content += '\t}\n};\n\n'
+            header_content += f"\t\t{{.data_size = {data_size}, .data_offset = 0x{flash_address:x}, .ciphertext = {{{key_to_c_format(ciphertext)}}}}},\n"
+        header_content += "\t}\n};\n\n"
 
         # For 64-byte k1 key
-        header_content += '// For 64-byte k1 key\n'
-        header_content += 'test_data_aes_mode_t test_data_xts_aes_256 = {\n'
-        header_content += f'\t.init_key = {{{key_to_c_format(init_key)}}},\n'
-        header_content += f'\t.k2_info = {{{key_to_c_format(k2_info)}}},\n'
-        header_content += f'\t.k1_encrypted = {{{{{key_to_c_format(k1_encrypted_64[0])}}}, {{{key_to_c_format(k1_encrypted_64[1])}}}}},\n'
-        header_content += f'\t.plaintext_data = {{{key_to_c_format(bytes(range(1, 129)))}}},\n'
-        header_content += '    .xts_test_data = {\n'
+        header_content += "// For 64-byte k1 key\n"
+        header_content += "test_data_aes_mode_t test_data_xts_aes_256 = {\n"
+        header_content += f"\t.init_key = {{{key_to_c_format(init_key)}}},\n"
+        header_content += f"\t.k2_info = {{{key_to_c_format(k2_info)}}},\n"
+        header_content += f"\t.k1_encrypted = {{{{{key_to_c_format(k1_encrypted_64[0])}}}, {{{key_to_c_format(k1_encrypted_64[1])}}}}},\n"
+        header_content += (
+            f"\t.plaintext_data = {{{key_to_c_format(bytes(range(1, 129)))}}},\n"
+        )
+        header_content += "    .xts_test_data = {\n"
 
         for data_size, flash_address, ciphertext in xts_test_data_xts_aes_256:
-            header_content += f'        {{.data_size = {data_size}, .data_offset = 0x{flash_address:x}, .ciphertext = {{{key_to_c_format(ciphertext)}}}}},\n'
-        header_content += '    }\n};\n'
-        header_content += '''
+            header_content += f"        {{.data_size = {data_size}, .data_offset = 0x{flash_address:x}, .ciphertext = {{{key_to_c_format(ciphertext)}}}}},\n"
+        header_content += "    }\n};\n"
+        header_content += """
 test_data_aes_mode_t test_data_ecdsa = {
     .init_key = { %s },
     .k2_info = { %s },
@@ -204,8 +219,14 @@ test_data_aes_mode_t test_data_ecdsa = {
         .puby = { %s }
     }
 };\n
-''' % (key_to_c_format(init_key), key_to_c_format(k2_info), key_to_c_format(k1_encrypted_32[0]), key_to_c_format(pubx),key_to_c_format(puby))
-        header_content += '''
+""" % (
+            key_to_c_format(init_key),
+            key_to_c_format(k2_info),
+            key_to_c_format(k1_encrypted_32[0]),
+            key_to_c_format(pubx),
+            key_to_c_format(puby),
+        )
+        header_content += """
 test_data_ecdh0_mode_t test_data_ecdh0 = {
     .plaintext_data = { %s },
     .k1 = {
@@ -218,22 +239,28 @@ test_data_ecdh0_mode_t test_data_ecdh0 = {
     }
 };\n
 
-''' % (key_to_c_format(bytes(range(1, 129))), key_to_c_format(k1), key_to_c_format(k1), key_to_c_format(k1_G_0), key_to_c_format(k1_G_1))
+""" % (
+            key_to_c_format(bytes(range(1, 129))),
+            key_to_c_format(k1),
+            key_to_c_format(k1),
+            key_to_c_format(k1_G_0),
+            key_to_c_format(k1_G_1),
+        )
 
         file.write(header_content)
 
 
 # Main script logic follows as per your provided structure
-init_key = key_from_file_or_generate('init_key.bin', 32)
-k2 = key_from_file_or_generate('k2.bin', 32)
-rand_num = key_from_file_or_generate('rand_num.bin', 32)
+init_key = key_from_file_or_generate("init_key.bin", 32)
+k2 = key_from_file_or_generate("k2.bin", 32)
+rand_num = key_from_file_or_generate("rand_num.bin", 32)
 
 temp_result_inner = calculate_aes_cipher(k2, rand_num)
 temp_result_outer = calculate_aes_cipher(temp_result_inner + rand_num, init_key)
 k2_info = temp_result_outer
 
-k1_32 = key_from_file_or_generate('k1.bin', 32)
-k1_64 = key_from_file_or_generate('k1_64.bin', 64)
+k1_32 = key_from_file_or_generate("k1.bin", 32)
+k1_64 = key_from_file_or_generate("k1_64.bin", 64)
 
 k1_32_reversed = k1_32[::-1]
 
@@ -245,13 +272,28 @@ k1_64_2 = k1_64[32:]
 k1_64_2_reversed = k1_64_2[::-1]
 
 k1_encrypted_32 = [calculate_aes_cipher(k1_32_reversed, k2)]
-k1_encrypted_64 = [calculate_aes_cipher(k1_64_1_reversed, k2), calculate_aes_cipher(k1_64_2_reversed, k2)]
+k1_encrypted_64 = [
+    calculate_aes_cipher(k1_64_1_reversed, k2),
+    calculate_aes_cipher(k1_64_2_reversed, k2),
+]
 
 test_data_xts_aes_128 = generate_xts_test_data(k1_32)
 xts_test_data_xts_aes_256 = generate_xts_test_data(k1_64)
 
-pubx, puby = generate_ecdsa_256_key_and_pub_key('k1.bin')
+pubx, puby = generate_ecdsa_256_key_and_pub_key("k1.bin")
 
-k1_G_0, k1_G_1 = generate_k1_G('k1.bin')
+k1_G_0, k1_G_1 = generate_k1_G("k1.bin")
 
-write_to_c_header(init_key, k1_32, k2_info, k1_encrypted_32, test_data_xts_aes_128, k1_encrypted_64, xts_test_data_xts_aes_256, pubx, puby, k1_G_0, k1_G_1)
+write_to_c_header(
+    init_key,
+    k1_32,
+    k2_info,
+    k1_encrypted_32,
+    test_data_xts_aes_128,
+    k1_encrypted_64,
+    xts_test_data_xts_aes_256,
+    pubx,
+    puby,
+    k1_G_0,
+    k1_G_1,
+)

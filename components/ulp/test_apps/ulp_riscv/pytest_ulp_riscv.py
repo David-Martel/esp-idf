@@ -14,10 +14,11 @@ def test_ulp_riscv(dut: Dut) -> None:  # type: ignore
 @pytest.mark.esp32s2
 @pytest.mark.esp32s3
 @pytest.mark.generic_multi_device
-@pytest.mark.parametrize(
-    'count', [2], indirect=True
-)
-def test_ulp_riscv_multi_device(case_tester) -> None:        # type: ignore
+@pytest.mark.parametrize("count", [2], indirect=True)
+def test_ulp_riscv_multi_device(case_tester) -> None:  # type: ignore
     for case in case_tester.test_menu:
-        if case.attributes.get('test_env', 'generic_multi_device') == 'generic_multi_device':
+        if (
+            case.attributes.get("test_env", "generic_multi_device")
+            == "generic_multi_device"
+        ):
             case_tester.run_multi_dev_case(case=case, reset=True)

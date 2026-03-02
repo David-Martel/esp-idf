@@ -14,6 +14,6 @@ from pytest_embedded import Dut
 @pytest.mark.esp32p4
 @pytest.mark.generic
 def test_onewire_example(dut: Dut) -> None:
-    dut.expect_exact('example: 1-Wire bus installed on GPIO')
-    dut.expect_exact('example: Device iterator created, start searching')
-    dut.expect_exact('example: Searching done')
+    dut.expect_exact("example: 1-Wire bus installed on GPIO")
+    dut.expect_exact("example: Device iterator created, start searching")
+    dut.expect_exact("example: Searching done")

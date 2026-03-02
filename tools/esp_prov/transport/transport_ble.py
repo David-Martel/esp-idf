@@ -14,18 +14,24 @@ class Transport_BLE(Transport):
         # Expect service UUID like '0000ffff-0000-1000-8000-00805f9b34fb'
         for name in nu_lookup.keys():
             # Calculate characteristic UUID for each endpoint
-            nu_lookup[name] = service_uuid[:4] + '{:02x}'.format(
-                int(nu_lookup[name], 16) & int(service_uuid[4:8], 16)) + service_uuid[8:]
+            nu_lookup[name] = (
+                service_uuid[:4]
+                + "{:02x}".format(int(nu_lookup[name], 16) & int(service_uuid[4:8], 16))
+                + service_uuid[8:]
+            )
 
         # Get BLE client module
         self.cli = ble_cli.get_client()
 
     async def connect(self, devname):
         # Use client to connect to BLE device and bind to service
-        if not await self.cli.connect(devname=devname, iface='hci0',
-                                      chrc_names=self.nu_lookup.keys(),
-                                      fallback_srv_uuid=self.service_uuid):
-            raise RuntimeError('Failed to initialize transport')
+        if not await self.cli.connect(
+            devname=devname,
+            iface="hci0",
+            chrc_names=self.nu_lookup.keys(),
+            fallback_srv_uuid=self.service_uuid,
+        ):
+            raise RuntimeError("Failed to initialize transport")
 
         # Irrespective of provided parameters, let the client
         # generate a lookup table by reading advertisement data
@@ -46,5 +52,5 @@ class Transport_BLE(Transport):
     async def send_data(self, ep_name, data):
         # Write (and read) data to characteristic corresponding to the endpoint
         if ep_name not in self.name_uuid_lookup.keys():
-            raise RuntimeError(f'Invalid endpoint: {ep_name}')
+            raise RuntimeError(f"Invalid endpoint: {ep_name}")
         return await self.cli.send_data(self.name_uuid_lookup[ep_name], data)

@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+
 class LdGenFailure(RuntimeError):
     """
     Parent class for any ldgen runtime failure which is due to input data

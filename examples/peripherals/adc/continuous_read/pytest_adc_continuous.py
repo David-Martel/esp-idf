@@ -13,6 +13,6 @@ from pytest_embedded.dut import Dut
 @pytest.mark.esp32c5
 @pytest.mark.adc
 def test_adc_continuous(dut: Dut) -> None:
-    res = dut.expect(r'TASK: ret is 0, ret_num is (\d+) bytes')
-    num = res.group(1).decode('utf8')
+    res = dut.expect(r"TASK: ret is 0, ret_num is (\d+) bytes")
+    num = res.group(1).decode("utf8")
     assert int(num) == 256

@@ -8,6 +8,6 @@ from pytest_embedded import Dut
 @pytest.mark.generic
 def test_nvs_bootloader_example(dut: Dut) -> None:
     # Expect to read hooks messages and data from NVS partition
-    dut.expect_exact('Before reading from NVS partition')
-    dut.expect_exact('Finished bootloader part')
-    dut.expect_exact('User application is loaded and running.')
+    dut.expect_exact("Before reading from NVS partition")
+    dut.expect_exact("Finished bootloader part")
+    dut.expect_exact("User application is loaded and running.")

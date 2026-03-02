@@ -13,7 +13,7 @@ def main() -> None:
     # Sanitize environment variables
     vars_to_remove = []
     for var_name in os.environ.keys():
-        if var_name.startswith('CI_'):
+        if var_name.startswith("CI_"):
             vars_to_remove.append(var_name)
     for var_name in vars_to_remove:
         del os.environ[var_name]
@@ -25,5 +25,5 @@ def main() -> None:
     sys.stdout.flush()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

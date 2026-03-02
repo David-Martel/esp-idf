@@ -4,8 +4,8 @@ import pytest
 from pytest_embedded_idf import IdfDut
 
 CONFIGS = [
-    'iram_safe',
-    'release',
+    "iram_safe",
+    "release",
 ]
 
 
@@ -19,6 +19,6 @@ CONFIGS = [
 @pytest.mark.esp32h2
 @pytest.mark.esp32p4
 @pytest.mark.generic
-@pytest.mark.parametrize('config', CONFIGS, indirect=True)
+@pytest.mark.parametrize("config", CONFIGS, indirect=True)
 def test_sdm(dut: IdfDut) -> None:
-    dut.run_all_single_board_cases(group='sdm')
+    dut.run_all_single_board_cases(group="sdm")

@@ -14,8 +14,12 @@ from pytest_embedded import Dut
 @pytest.mark.esp32c5
 @pytest.mark.esp32c61
 @pytest.mark.generic
-@pytest.mark.parametrize('config', [
-    'release',
-], indirect=True)
+@pytest.mark.parametrize(
+    "config",
+    [
+        "release",
+    ],
+    indirect=True,
+)
 def test_legacy_temp_sensor_driver(dut: Dut) -> None:
     dut.run_all_single_board_cases(timeout=120)

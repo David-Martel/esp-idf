@@ -9,4 +9,4 @@ from pytest_embedded import Dut
 @pytest.mark.esp32p4
 @pytest.mark.generic
 def test_usb_phy(dut: Dut) -> None:
-    dut.run_all_single_board_cases(group='phy')
+    dut.run_all_single_board_cases(group="phy")

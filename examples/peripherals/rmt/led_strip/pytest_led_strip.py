@@ -14,7 +14,7 @@ from pytest_embedded import Dut
 @pytest.mark.esp32p4
 @pytest.mark.generic
 def test_led_strip_example(dut: Dut) -> None:
-    dut.expect_exact('example: Create RMT TX channel')
-    dut.expect_exact('example: Install led strip encoder')
-    dut.expect_exact('example: Enable RMT TX channel')
-    dut.expect_exact('example: Start LED rainbow chase')
+    dut.expect_exact("example: Create RMT TX channel")
+    dut.expect_exact("example: Install led strip encoder")
+    dut.expect_exact("example: Enable RMT TX channel")
+    dut.expect_exact("example: Start LED rainbow chase")

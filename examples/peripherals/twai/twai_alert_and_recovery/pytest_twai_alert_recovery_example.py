@@ -8,5 +8,5 @@ from pytest_embedded import Dut
 @pytest.mark.esp32
 @pytest.mark.twai_transceiver
 def test_twai_alert_recovery_example(dut: Dut) -> None:
-    dut.expect_exact('TWAI Alert and Recovery: Driver installed')
-    dut.expect_exact('TWAI Alert and Recovery: Driver uninstalled')
+    dut.expect_exact("TWAI Alert and Recovery: Driver installed")
+    dut.expect_exact("TWAI Alert and Recovery: Driver uninstalled")

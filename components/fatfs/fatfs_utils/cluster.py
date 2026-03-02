@@ -1,17 +1,27 @@
 # SPDX-FileCopyrightText: 2021-2022 Espressif Systems (Shanghai) CO LTD
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Dict, Optional
+from typing import Dict
 
 from construct import Int16ul
 
 from .fatfs_state import BootSectorState
-from .utils import (EMPTY_BYTE, FAT12, FAT16, build_byte, merge_by_half_byte_12_bit_little_endian,
-                    split_by_half_byte_12_bit_little_endian)
+from .utils import (
+    EMPTY_BYTE,
+    FAT12,
+    FAT16,
+    build_byte,
+    merge_by_half_byte_12_bit_little_endian,
+    split_by_half_byte_12_bit_little_endian,
+)
 
 
 def get_dir_size(is_root: bool, boot_sector: BootSectorState) -> int:
-    dir_size_: int = boot_sector.root_dir_sectors_cnt * boot_sector.sector_size if is_root else boot_sector.sector_size
+    dir_size_: int = (
+        boot_sector.root_dir_sectors_cnt * boot_sector.sector_size
+        if is_root
+        else boot_sector.sector_size
+    )
     return dir_size_
 
 
@@ -19,17 +29,20 @@ class Cluster:
     """
     class Cluster handles values in FAT table and allocates sectors in data region.
     """
+
     RESERVED_BLOCK_ID: int = 0
     ROOT_BLOCK_ID: int = 1
     ALLOCATED_BLOCK_FAT12: int = 0xFFF
     ALLOCATED_BLOCK_FAT16: int = 0xFFFF
-    ALLOCATED_BLOCK_SWITCH = {FAT12: ALLOCATED_BLOCK_FAT12, FAT16: ALLOCATED_BLOCK_FAT16}
+    ALLOCATED_BLOCK_SWITCH = {
+        FAT12: ALLOCATED_BLOCK_FAT12,
+        FAT16: ALLOCATED_BLOCK_FAT16,
+    }
     INITIAL_BLOCK_SWITCH: Dict[int, int] = {FAT12: 0xFF8, FAT16: 0xFFF8}
 
-    def __init__(self,
-                 cluster_id: int,
-                 boot_sector_state: BootSectorState,
-                 init_: bool) -> None:
+    def __init__(
+        self, cluster_id: int, boot_sector_state: BootSectorState, init_: bool
+    ) -> None:
         """
         Initially, if init_ is False, the cluster is virtual and is not allocated (doesn't do changes in the FAT).
         :param cluster_id: the cluster ID - a key value linking the file's cluster,
@@ -45,7 +58,9 @@ class Cluster:
         # First cluster in FAT is reserved, low 8 bits contains BPB_Media and the rest is filled with 1
         # e.g. the esp32 media type is 0xF8 thus the FAT[0] = 0xFF8 for FAT12, 0xFFF8 for FAT16
         if self.id == Cluster.RESERVED_BLOCK_ID and init_:
-            self.set_in_fat(self.INITIAL_BLOCK_SWITCH[self.boot_sector_state.fatfs_type])
+            self.set_in_fat(
+                self.INITIAL_BLOCK_SWITCH[self.boot_sector_state.fatfs_type]
+            )
             return
         self.cluster_data_address: int = self._compute_cluster_data_address()
         assert self.cluster_data_address
@@ -75,7 +90,9 @@ class Cluster:
         return logical_position_
 
     @staticmethod
-    def compute_cluster_data_address(boot_sector_state: BootSectorState, id_: int) -> int:
+    def compute_cluster_data_address(
+        boot_sector_state: BootSectorState, id_: int
+    ) -> int:
         """
         This method translates the id of the cluster to the address in data region.
 
@@ -86,7 +103,10 @@ class Cluster:
         data_address_: int = boot_sector_state.root_directory_start
         if not id_ == Cluster.ROOT_BLOCK_ID:
             # the first data cluster id is 2 (we have to subtract reserved cluster and cluster for root)
-            data_address_ = boot_sector_state.sector_size * (id_ - 2) + boot_sector_state.data_region_start
+            data_address_ = (
+                boot_sector_state.sector_size * (id_ - 2)
+                + boot_sector_state.data_region_start
+            )
         return data_address_
 
     def _compute_cluster_data_address(self) -> int:
@@ -103,7 +123,10 @@ class Cluster:
         The property method computes the real address of the cluster in the FAT region. Result is simply
         address of the cluster in fat + fat table address.
         """
-        cluster_address: int = self.boot_sector_state.fat_table_start_address + self.fat_cluster_address // 8
+        cluster_address: int = (
+            self.boot_sector_state.fat_table_start_address
+            + self.fat_cluster_address // 8
+        )
         return cluster_address
 
     def get_from_fat(self) -> int:
@@ -125,12 +148,16 @@ class Cluster:
         if self.boot_sector_state.fatfs_type == FAT12:
             if self.fat_cluster_address % 8 == 0:
                 # even block
-                return bin_img_[self.real_cluster_address] | ((bin_img_[self.real_cluster_address + 1] & 0x0F) << 8)
+                return bin_img_[self.real_cluster_address] | (
+                    (bin_img_[self.real_cluster_address + 1] & 0x0F) << 8
+                )
             # odd block
-            return ((bin_img_[self.real_cluster_address] & 0xF0) >> 4) | (bin_img_[self.real_cluster_address + 1] << 4)
+            return ((bin_img_[self.real_cluster_address] & 0xF0) >> 4) | (
+                bin_img_[self.real_cluster_address + 1] << 4
+            )
         if self.boot_sector_state.fatfs_type == FAT16:
-            return int.from_bytes(bin_img_[address_:address_ + 2], byteorder='little')
-        raise NotImplementedError('Only valid fatfs types are FAT12 and FAT16.')
+            return int.from_bytes(bin_img_[address_ : address_ + 2], byteorder="little")
+        raise NotImplementedError("Only valid fatfs types are FAT12 and FAT16.")
 
     @property
     def is_empty(self) -> bool:
@@ -160,7 +187,7 @@ class Cluster:
 
             If a byte contents is 0b11110000, the msb half-byte would be 0b1111
             """
-            self.boot_sector_state.binary_image[address] &= 0x0f
+            self.boot_sector_state.binary_image[address] &= 0x0F
             self.boot_sector_state.binary_image[address] |= value_ << 4
 
         def _set_lsb_half_byte(address: int, value_: int) -> None:
@@ -170,7 +197,7 @@ class Cluster:
 
             If a byte contents is 0b11110000, the lsb half-byte would be 0b0000
             """
-            self.boot_sector_state.binary_image[address] &= 0xf0
+            self.boot_sector_state.binary_image[address] &= 0xF0
             self.boot_sector_state.binary_image[address] |= value_
 
         # value must fit into number of bits of the fat (12, 16 or 32)
@@ -182,14 +209,20 @@ class Cluster:
             assert merge_by_half_byte_12_bit_little_endian(*half_bytes) == value
             if self.fat_cluster_address % 8 == 0:
                 # even block
-                bin_img_[self.real_cluster_address] = build_byte(half_bytes[1], half_bytes[0])
+                bin_img_[self.real_cluster_address] = build_byte(
+                    half_bytes[1], half_bytes[0]
+                )
                 _set_lsb_half_byte(self.real_cluster_address + 1, half_bytes[2])
             elif self.fat_cluster_address % 8 != 0:
                 # odd block
                 _set_msb_half_byte(self.real_cluster_address, half_bytes[0])
-                bin_img_[self.real_cluster_address + 1] = build_byte(half_bytes[2], half_bytes[1])
+                bin_img_[self.real_cluster_address + 1] = build_byte(
+                    half_bytes[2], half_bytes[1]
+                )
         elif self.boot_sector_state.fatfs_type == FAT16:
-            bin_img_[self.real_cluster_address:self.real_cluster_address + 2] = Int16ul.build(value)
+            bin_img_[self.real_cluster_address : self.real_cluster_address + 2] = (
+                Int16ul.build(value)
+            )
         assert self.get_from_fat() == value
 
     @property
@@ -210,4 +243,6 @@ class Cluster:
         cluster_start = self.cluster_data_address
         dir_size = get_dir_size(self.is_root, self.boot_sector_state)
         cluster_end = cluster_start + dir_size
-        self.boot_sector_state.binary_image[cluster_start:cluster_end] = dir_size * EMPTY_BYTE
+        self.boot_sector_state.binary_image[cluster_start:cluster_end] = (
+            dir_size * EMPTY_BYTE
+        )

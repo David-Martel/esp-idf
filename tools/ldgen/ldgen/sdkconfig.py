@@ -10,6 +10,7 @@ class SDKConfig:
     """
     Evaluates conditional expressions based on the build's sdkconfig and Kconfig files.
     """
+
     def __init__(self, kconfig_file, sdkconfig_file):
         self.config = kconfiglib.Kconfig(kconfig_file)
         self.config.load_config(sdkconfig_file)
@@ -23,4 +24,4 @@ class SDKConfig:
         elif result == 2:  # y
             return True
         else:  # m
-            raise Exception('unsupported config expression result')
+            raise Exception("unsupported config expression result")

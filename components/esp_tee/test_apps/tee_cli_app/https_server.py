@@ -25,9 +25,9 @@ import sys
 # Get the local machine's network IP address
 def get_local_addr() -> str:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    local_addr = ''
+    local_addr = ""
     try:
-        s.connect(('8.8.8.8', 80))  # Connect to a remote server to get the network IP
+        s.connect(("8.8.8.8", 80))  # Connect to a remote server to get the network IP
         local_addr = s.getsockname()[0]
     finally:
         s.close()
@@ -36,11 +36,28 @@ def get_local_addr() -> str:
 
 def main() -> None:
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description='Start a local HTTPS server')
-    parser.add_argument('--certfile', default='test_certs/server_cert.pem', help='Path to the SSL certificate file (default: test_certs/server_cert.pem)')
-    parser.add_argument('--keyfile', default='test_certs/server_key.pem', help='Path to the SSL key file (default: test_certs/server_key.pem)')
-    parser.add_argument('--port', type=int, default=4443, help='Port number to bind the server to (default: 4443)')
-    parser.add_argument('--path', default='build', help='Path to the directory to serve files from (default: build directory)')
+    parser = argparse.ArgumentParser(description="Start a local HTTPS server")
+    parser.add_argument(
+        "--certfile",
+        default="test_certs/server_cert.pem",
+        help="Path to the SSL certificate file (default: test_certs/server_cert.pem)",
+    )
+    parser.add_argument(
+        "--keyfile",
+        default="test_certs/server_key.pem",
+        help="Path to the SSL key file (default: test_certs/server_key.pem)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=4443,
+        help="Port number to bind the server to (default: 4443)",
+    )
+    parser.add_argument(
+        "--path",
+        default="build",
+        help="Path to the directory to serve files from (default: build directory)",
+    )
     args = parser.parse_args()
 
     # Resolve the absolute paths for the cert and key files before changing the working directory
@@ -70,17 +87,17 @@ def main() -> None:
     httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
 
     # Print the server address for clients to use
-    print(f'Server is running at: https://{local_ip}:{args.port}')
-    print('Press [Ctrl+C] to shut down the server')
+    print(f"Server is running at: https://{local_ip}:{args.port}")
+    print("Press [Ctrl+C] to shut down the server")
 
     # Start the server
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print('\nShutting down the server...')
+        print("\nShutting down the server...")
         httpd.shutdown()
         sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

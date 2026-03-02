@@ -7,12 +7,14 @@ from pytest_embedded import Dut
 @pytest.mark.supported_targets
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'default',
+        "default",
     ],
     indirect=True,
 )
 def test_examples_custom_flash_driver(dut: Dut) -> None:
-    dut.expect(r'Using overridden bootloader_flash_unlock', timeout=20)
-    dut.expect(r'Using overridden bootloader_flash_qio, the list number is \d+', timeout=20)
+    dut.expect(r"Using overridden bootloader_flash_unlock", timeout=20)
+    dut.expect(
+        r"Using overridden bootloader_flash_qio, the list number is \d+", timeout=20
+    )

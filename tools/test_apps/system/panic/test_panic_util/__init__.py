@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: Unlicense OR CC0-1.0
 from .panic_dut import PanicTestDut
 
-__all__ = ['PanicTestDut']
+__all__ = ["PanicTestDut"]

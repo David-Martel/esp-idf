@@ -49,15 +49,15 @@ class Job:
     def to_dict(self) -> t.Dict[str, t.Any]:
         res = {}
         for k, v in inspect.getmembers(self):
-            if k.startswith('_'):
+            if k.startswith("_"):
                 continue
 
             # name is the dict key
-            if k == 'name':
+            if k == "name":
                 continue
 
             # parallel 1 is not allowed
-            if k == 'parallel' and v == 1:
+            if k == "parallel" and v == 1:
                 continue
 
             if v is None:
@@ -83,9 +83,9 @@ class EmptyJob(Job):
         **kwargs: t.Any,
     ) -> None:
         super().__init__(
-            name=name or 'fake_pass_job',
-            tags=tags or ['fast_run', 'shiny'],
-            stage=stage or 'build',
+            name=name or "fake_pass_job",
+            tags=tags or ["fast_run", "shiny"],
+            stage=stage or "build",
             script=['echo "This is a fake job to pass the pipeline"'],
             before_script=before_script or [],
             after_script=after_script or [],
@@ -103,9 +103,9 @@ class BuildJob(Job):
         **kwargs: t.Any,
     ) -> None:
         super().__init__(
-            extends=extends or ['.dynamic_build_template'],
-            tags=tags or ['build', 'shiny'],
-            stage=stage or 'build',
+            extends=extends or [".dynamic_build_template"],
+            tags=tags or ["build", "shiny"],
+            stage=stage or "build",
             **kwargs,
         )
 
@@ -119,8 +119,8 @@ class TargetTestJob(Job):
         **kwargs: t.Any,
     ) -> None:
         super().__init__(
-            extends=extends or ['.dynamic_target_test_template'],
-            stage=stage or 'target_test',
+            extends=extends or [".dynamic_target_test_template"],
+            stage=stage or "target_test",
             **kwargs,
         )
 
@@ -151,35 +151,39 @@ class TestCase:
         return not self.is_failure and not self.is_skipped
 
     @classmethod
-    def from_test_case_node(cls, node: Element) -> t.Optional['TestCase']:
-        if 'name' not in node.attrib:
-            print('WARNING: Node Invalid: ', node)
+    def from_test_case_node(cls, node: Element) -> t.Optional["TestCase"]:
+        if "name" not in node.attrib:
+            print("WARNING: Node Invalid: ", node)
             return None
 
         # url to test cases dashboard
-        grafana_base_url = urllib.parse.urljoin(os.getenv('CI_DASHBOARD_HOST', ''), '/d/Ucg477Fnz/case-list')
-        encoded_params = urllib.parse.urlencode({'var-case_id': node.attrib['name']}, quote_via=urllib.parse.quote)
+        grafana_base_url = urllib.parse.urljoin(
+            os.getenv("CI_DASHBOARD_HOST", ""), "/d/Ucg477Fnz/case-list"
+        )
+        encoded_params = urllib.parse.urlencode(
+            {"var-case_id": node.attrib["name"]}, quote_via=urllib.parse.quote
+        )
 
         kwargs = {
-            'name': node.attrib['name'],
-            'file': node.attrib.get('file'),
-            'time': float(node.attrib.get('time') or 0),
-            'ci_job_url': node.attrib.get('ci_job_url') or 'Not found',
-            'ci_dashboard_url': f'{grafana_base_url}?{encoded_params}',
-            'dut_log_url': node.attrib.get('dut_log_url') or 'Not found',
+            "name": node.attrib["name"],
+            "file": node.attrib.get("file"),
+            "time": float(node.attrib.get("time") or 0),
+            "ci_job_url": node.attrib.get("ci_job_url") or "Not found",
+            "ci_dashboard_url": f"{grafana_base_url}?{encoded_params}",
+            "dut_log_url": node.attrib.get("dut_log_url") or "Not found",
         }
 
-        failure_node = node.find('failure')
+        failure_node = node.find("failure")
         # bool(failure_node) is False, so compare with None
         if failure_node is None:
-            failure_node = node.find('error')
+            failure_node = node.find("error")
         if failure_node is not None:
-            message = failure_node.attrib.get('message', '')
-            kwargs['failure'] = message
+            message = failure_node.attrib.get("message", "")
+            kwargs["failure"] = message
 
-        skipped_node = node.find('skipped')
+        skipped_node = node.find("skipped")
         if skipped_node is not None:
-            kwargs['skipped'] = skipped_node.attrib['message']
+            kwargs["skipped"] = skipped_node.attrib["message"]
 
         return cls(**kwargs)  # type: ignore
 
@@ -199,28 +203,34 @@ class GitlabJob:
 
     @property
     def is_failed(self) -> bool:
-        return self.status == 'failed'
+        return self.status == "failed"
 
     @property
     def is_success(self) -> bool:
-        return self.status == 'success'
+        return self.status == "success"
 
     @classmethod
-    def from_json_data(cls, job_data: dict, failure_data: dict) -> t.Optional['GitlabJob']:
-        grafana_base_url = urllib.parse.urljoin(os.getenv('CI_DASHBOARD_HOST', ''), '/d/LoUa-qLWz/job-list')
-        encoded_params = urllib.parse.urlencode({'var-job_name': job_data['name']}, quote_via=urllib.parse.quote)
+    def from_json_data(
+        cls, job_data: dict, failure_data: dict
+    ) -> t.Optional["GitlabJob"]:
+        grafana_base_url = urllib.parse.urljoin(
+            os.getenv("CI_DASHBOARD_HOST", ""), "/d/LoUa-qLWz/job-list"
+        )
+        encoded_params = urllib.parse.urlencode(
+            {"var-job_name": job_data["name"]}, quote_via=urllib.parse.quote
+        )
 
         kwargs = {
-            'id': job_data['id'],
-            'name': job_data['name'],
-            'stage': job_data['stage'],
-            'status': job_data['status'],
-            'url': job_data['url'],
-            'ci_dashboard_url': f'{grafana_base_url}?{encoded_params}',
-            'failure_reason': job_data['failure_reason'],
-            'failure_log': job_data['failure_log'],
-            'latest_total_count': failure_data.get('total_count', 0),
-            'latest_failed_count': failure_data.get('failed_count', 0),
+            "id": job_data["id"],
+            "name": job_data["name"],
+            "stage": job_data["stage"],
+            "status": job_data["status"],
+            "url": job_data["url"],
+            "ci_dashboard_url": f"{grafana_base_url}?{encoded_params}",
+            "failure_reason": job_data["failure_reason"],
+            "failure_log": job_data["failure_log"],
+            "latest_total_count": failure_data.get("total_count", 0),
+            "latest_failed_count": failure_data.get("failed_count", 0),
         }
 
         return cls(**kwargs)  # type: ignore

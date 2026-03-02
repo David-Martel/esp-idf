@@ -19,11 +19,14 @@ try:
 except ImportError:
     pass
 
-OLDEST_PYTHON_SUPPORTED = (3, 9)  # keep it as tuple for comparison with sys.version_info
+OLDEST_PYTHON_SUPPORTED = (
+    3,
+    9,
+)  # keep it as tuple for comparison with sys.version_info
 
 
 def _ver_to_str(it):  # type: (Iterable) -> str
-    return '.'.join(str(x) for x in it)
+    return ".".join(str(x) for x in it)
 
 
 def is_supported():  # type: () -> bool
@@ -33,12 +36,12 @@ def is_supported():  # type: () -> bool
 def check():  # type: () -> None
     if not is_supported():
         raise RuntimeError(
-            'ESP-IDF supports Python {} or newer but you are using Python {}. Please upgrade your '
-            'installation as described in the documentation.'.format(
+            "ESP-IDF supports Python {} or newer but you are using Python {}. Please upgrade your "
+            "installation as described in the documentation.".format(
                 _ver_to_str(OLDEST_PYTHON_SUPPORTED), _ver_to_str(sys.version_info[:3])
             )
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     check()

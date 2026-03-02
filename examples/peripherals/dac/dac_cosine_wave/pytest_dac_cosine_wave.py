@@ -10,7 +10,12 @@ from pytest_embedded import Dut
 def test_dac_cosine_wave_example_with_12bit_adc(dut: Dut) -> None:
     res = []
     for _ in range(30):
-        res.append(dut.expect(r'DAC channel 0 value:( +)(\d+)(.*)DAC channel 1 value:( +)(\d+)', timeout=10))
+        res.append(
+            dut.expect(
+                r"DAC channel 0 value:( +)(\d+)(.*)DAC channel 1 value:( +)(\d+)",
+                timeout=10,
+            )
+        )
 
     chan0_val = []
     for val in res:
@@ -24,7 +29,12 @@ def test_dac_cosine_wave_example_with_12bit_adc(dut: Dut) -> None:
 def test_dac_cosine_wave_example_with_13bit_adc(dut: Dut) -> None:
     res = []
     for _ in range(30):
-        res.append(dut.expect(r'DAC channel 0 value:( +)(\d+)(.*)DAC channel 1 value:( +)(\d+)', timeout=10))
+        res.append(
+            dut.expect(
+                r"DAC channel 0 value:( +)(\d+)(.*)DAC channel 1 value:( +)(\d+)",
+                timeout=10,
+            )
+        )
 
     chan0_val = []
     for val in res:

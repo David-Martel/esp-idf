@@ -4,6 +4,6 @@
 import os
 import sys
 
-tools_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', '..'))
+tools_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if tools_dir not in sys.path:
     sys.path.append(tools_dir)

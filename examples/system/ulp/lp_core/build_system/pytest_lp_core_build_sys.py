@@ -9,4 +9,4 @@ from pytest_embedded_idf.dut import IdfDut
 @pytest.mark.esp32p4
 @pytest.mark.generic
 def test_lp_core_build_sys(dut: IdfDut) -> None:
-    dut.expect('Sum calculated by ULP using external library func: 11')
+    dut.expect("Sum calculated by ULP using external library func: 11")

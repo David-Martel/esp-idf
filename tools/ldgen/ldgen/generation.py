@@ -8,15 +8,9 @@ import itertools
 from collections import namedtuple
 
 from .entity import Entity
-from .fragments import Keep
-from .fragments import Scheme
-from .fragments import Sections
-from .fragments import Sort
-from .fragments import Surround
+from .fragments import Keep, Scheme, Sections, Sort, Surround
 from .ldgen_common import LdGenFailure
-from .output_commands import AlignAtAddress
-from .output_commands import InputSectionDesc
-from .output_commands import SymbolAtAddress
+from .output_commands import AlignAtAddress, InputSectionDesc, SymbolAtAddress
 
 
 class Placement:
@@ -41,7 +35,9 @@ class Placement:
     for details).
     """
 
-    def __init__(self, node, sections, target, flags, explicit, force=False, dryrun=False):
+    def __init__(
+        self, node, sections, target, flags, explicit, force=False, dryrun=False
+    ):
         self.node = node
         self.sections = sections
         self.target = target
@@ -83,11 +79,13 @@ class Placement:
         #
         # Placement can also be a basis if it has flags
         # (self.flags) or its basis has flags (self.basis.flags)
-        significant = (not self.basis or
-                       self.target != self.basis.target or
-                       (self.flags and not self.basis.flags) or
-                       (not self.flags and self.basis.flags) or
-                       self.force)
+        significant = (
+            not self.basis
+            or self.target != self.basis.target
+            or (self.flags and not self.basis.flags)
+            or (not self.flags and self.basis.flags)
+            or self.force
+        )
 
         if significant and not self.explicit and not self.sections:
             # The placement is significant, but it is an intermediate placement
@@ -155,7 +153,7 @@ class EntityNode:
         assert name and name != Entity.ALL
 
         child = [c for c in self.children if c.name == name]
-        assert (len(child) <= 1)
+        assert len(child) <= 1
 
         if not child:
             child = self.child_t(self, name)
@@ -169,7 +167,7 @@ class EntityNode:
         commands = collections.defaultdict(list)
 
         def process_commands(cmds):
-            for (target, commands_list) in cmds.items():
+            for target, commands_list in cmds.items():
                 commands[target].extend(commands_list)
 
         # Process the commands generated from this node
@@ -212,33 +210,55 @@ class EntityNode:
                 for flag in surround_type:
                     if flag.pre:
                         if isinstance(flag, Surround):
-                            commands[placement.target].append(SymbolAtAddress(f'_{flag.symbol}_start', tied))
+                            commands[placement.target].append(
+                                SymbolAtAddress(f"_{flag.symbol}_start", tied)
+                            )
                         else:  # ALIGN
-                            commands[placement.target].append(AlignAtAddress(flag.alignment, tied))
+                            commands[placement.target].append(
+                                AlignAtAddress(flag.alignment, tied)
+                            )
 
                 # This is for expanded object node and symbol node placements without checking for
                 # the type.
                 placement_sections = frozenset(placement.sections)
-                command_sections = sections if sections == placement_sections else placement_sections
+                command_sections = (
+                    sections if sections == placement_sections else placement_sections
+                )
 
-                command = InputSectionDesc(placement.node.entity, command_sections,
-                                           [e.node.entity for e in placement.exclusions], keep, sort, tied)
+                command = InputSectionDesc(
+                    placement.node.entity,
+                    command_sections,
+                    [e.node.entity for e in placement.exclusions],
+                    keep,
+                    sort,
+                    tied,
+                )
                 commands[placement.target].append(command)
 
                 # Generate commands for intermediate, non-explicit exclusion placements here,
                 # so that they can be enclosed by flags that affect the parent placement.
                 for subplacement in placement.subplacements:
                     if not subplacement.flags and not subplacement.explicit:
-                        command = InputSectionDesc(subplacement.node.entity, subplacement.sections,
-                                                   [e.node.entity for e in subplacement.exclusions], keep, sort, tied)
+                        command = InputSectionDesc(
+                            subplacement.node.entity,
+                            subplacement.sections,
+                            [e.node.entity for e in subplacement.exclusions],
+                            keep,
+                            sort,
+                            tied,
+                        )
                         commands[placement.target].append(command)
 
                 for flag in surround_type:
                     if flag.post:
                         if isinstance(flag, Surround):
-                            commands[placement.target].append(SymbolAtAddress(f'_{flag.symbol}_end', tied))
+                            commands[placement.target].append(
+                                SymbolAtAddress(f"_{flag.symbol}_end", tied)
+                            )
                         else:  # ALIGN
-                            commands[placement.target].append(AlignAtAddress(flag.alignment, tied))
+                            commands[placement.target].append(
+                                AlignAtAddress(flag.alignment, tied)
+                            )
 
         return commands
 
@@ -319,8 +339,12 @@ class ObjectNode(EntityNode):
 
             if obj_sections:
                 symbol = entity.symbol
-                remove_sections = [s.replace('.*', '.%s' % symbol) for s in sections if '.*' in s]
-                filtered_sections = [s for s in obj_sections if s not in remove_sections]
+                remove_sections = [
+                    s.replace(".*", ".%s" % symbol) for s in sections if ".*" in s
+                ]
+                filtered_sections = [
+                    s for s in obj_sections if s not in remove_sections
+                ]
 
                 if set(filtered_sections) != set(obj_sections):
                     if sym_placement.basis:
@@ -331,7 +355,9 @@ class ObjectNode(EntityNode):
                             obj_placement = self.placements[sections]
                         except KeyError:
                             # Create intermediate placement.
-                            obj_placement = self.self_placement(sections, sym_placement.basis.target, None, False)
+                            obj_placement = self.self_placement(
+                                sections, sym_placement.basis.target, None, False
+                            )
                             if obj_placement.basis.flags:
                                 subplace = True
 
@@ -348,8 +374,10 @@ class ObjectNode(EntityNode):
                     child.placements[sections] = sym_placement
 
     def get_output_sections(self):
-        output_sections = [key for key in self.placements if key not in self.subplacements]
-        return sorted(output_sections, key=' '.join)
+        output_sections = [
+            key for key in self.placements if key not in self.subplacements
+        ]
+        return sorted(output_sections, key=" ".join)
 
 
 class ArchiveNode(EntityNode):
@@ -383,7 +411,7 @@ class Generation:
     """
 
     # Processed mapping, scheme and section entries
-    EntityMapping = namedtuple('EntityMapping', 'entity sections_group target flags')
+    EntityMapping = namedtuple("EntityMapping", "entity sections_group target flags")
 
     def __init__(self, check_mappings=False, check_mapping_exceptions=None):
         self.schemes = {}
@@ -404,7 +432,7 @@ class Generation:
         for scheme in self.schemes.values():
             sections_bucket = collections.defaultdict(list)
 
-            for (sections_name, target_name) in scheme.entries:
+            for sections_name, target_name in scheme.entries:
                 # Get the sections under the bucket 'target_name'. If this bucket does not exist
                 # is created automatically
                 sections_in_bucket = sections_bucket[target_name]
@@ -412,7 +440,12 @@ class Generation:
                 try:
                     sections = self.placements[sections_name]
                 except KeyError:
-                    message = GenerationException.UNDEFINED_REFERENCE + " to sections '" + sections_name + "'."
+                    message = (
+                        GenerationException.UNDEFINED_REFERENCE
+                        + " to sections '"
+                        + sections_name
+                        + "'."
+                    )
                     raise GenerationException(message, scheme)
 
                 sections_in_bucket.append(sections)
@@ -420,8 +453,10 @@ class Generation:
             scheme_dictionary[scheme.name] = sections_bucket
 
         # Search for and raise exception on first instance of sections mapped to multiple targets
-        for (scheme_name, sections_bucket) in scheme_dictionary.items():
-            for sections_a, sections_b in itertools.combinations(sections_bucket.values(), 2):
+        for scheme_name, sections_bucket in scheme_dictionary.items():
+            for sections_a, sections_b in itertools.combinations(
+                sections_bucket.values(), 2
+            ):
                 set_a = set()
                 set_b = set()
 
@@ -437,7 +472,9 @@ class Generation:
                 # targets. Raise exception.
                 if intersection:
                     scheme = self.schemes[scheme_name]
-                    message = 'Sections ' + str(intersection) + ' mapped to multiple targets.'
+                    message = (
+                        "Sections " + str(intersection) + " mapped to multiple targets."
+                    )
                     raise GenerationException(message, scheme)
 
         return scheme_dictionary
@@ -453,13 +490,15 @@ class Generation:
         for mapping in self.mappings.values():
             archive = mapping.archive
 
-            for (obj, symbol, scheme_name) in mapping.entries:
+            for obj, symbol, scheme_name in mapping.entries:
                 entity = Entity(archive, obj, symbol)
 
                 # Check the entity exists
-                if (self.check_mappings
-                        and entity.specificity.value > Entity.Specificity.ARCHIVE.value
-                        and mapping.name not in self.check_mapping_exceptions):
+                if (
+                    self.check_mappings
+                    and entity.specificity.value > Entity.Specificity.ARCHIVE.value
+                    and mapping.name not in self.check_mapping_exceptions
+                ):
                     if not entities.check_exists(entity):
                         message = "'%s' not found" % str(entity)
                         raise GenerationException(message, mapping)
@@ -469,23 +508,33 @@ class Generation:
                     # Check if all section->target defined in the current
                     # scheme.
                     for flag in flags:
-                        if (flag.target not in scheme_dictionary[scheme_name].keys()
-                                or flag.section not in
-                                [_s.name for _s in scheme_dictionary[scheme_name][flag.target]]):
-                            message = "%s->%s not defined in scheme '%s'" % (flag.section, flag.target, scheme_name)
+                        if flag.target not in scheme_dictionary[
+                            scheme_name
+                        ].keys() or flag.section not in [
+                            _s.name
+                            for _s in scheme_dictionary[scheme_name][flag.target]
+                        ]:
+                            message = "%s->%s not defined in scheme '%s'" % (
+                                flag.section,
+                                flag.target,
+                                scheme_name,
+                            )
                             raise GenerationException(message, mapping)
                 else:
                     flags = None
 
                 # Create placement for each 'section -> target' in the scheme.
-                for (target, sections) in scheme_dictionary[scheme_name].items():
+                for target, sections in scheme_dictionary[scheme_name].items():
                     for section in sections:
                         # Find the applicable flags
                         _flags = []
 
                         if flags:
                             for flag in flags:
-                                if (flag.section, flag.target) == (section.name, target):
+                                if (flag.section, flag.target) == (
+                                    section.name,
+                                    target,
+                                ):
                                     _flags.extend(flag.flags)
 
                         sections_str = get_section_strs(section)
@@ -498,24 +547,32 @@ class Generation:
                             existing = None
 
                         if not existing:
-                            entity_mappings[key] = Generation.EntityMapping(entity, sections_str, target, _flags)
+                            entity_mappings[key] = Generation.EntityMapping(
+                                entity, sections_str, target, _flags
+                            )
                         else:
                             # Check for conflicts.
                             if target != existing.target:
-                                raise GenerationException('Sections mapped to multiple targets.', mapping)
+                                raise GenerationException(
+                                    "Sections mapped to multiple targets.", mapping
+                                )
 
                             # Combine flags here if applicable, to simplify
                             # insertion logic.
                             if _flags or existing.flags:
-                                if (_flags and not existing.flags) or (not _flags and existing.flags):
+                                if (_flags and not existing.flags) or (
+                                    not _flags and existing.flags
+                                ):
                                     _flags.extend(existing.flags)
-                                    entity_mappings[key] = Generation.EntityMapping(entity,
-                                                                                    sections_str,
-                                                                                    target, _flags)
+                                    entity_mappings[key] = Generation.EntityMapping(
+                                        entity, sections_str, target, _flags
+                                    )
                                 elif _flags == existing.flags:
                                     pass
                                 else:
-                                    raise GenerationException('Conflicting flags specified.', mapping)
+                                    raise GenerationException(
+                                        "Conflicting flags specified.", mapping
+                                    )
 
         # Sort the mappings by specificity, so as to simplify
         # insertion logic.
@@ -552,8 +609,10 @@ class Generation:
             if fragment.name in dict_to_append_to:
                 stored = dict_to_append_to[fragment.name].path
                 new = fragment.path
-                message = "Duplicate definition of fragment '%s' found in %s and %s." % (
-                    fragment.name, stored, new)
+                message = (
+                    "Duplicate definition of fragment '%s' found in %s and %s."
+                    % (fragment.name, stored, new)
+                )
                 raise GenerationException(message)
 
             dict_to_append_to[fragment.name] = fragment
@@ -565,7 +624,7 @@ class GenerationException(LdGenFailure):
     evaluate conditions, duplicate mappings, etc.
     """
 
-    UNDEFINED_REFERENCE = 'Undefined reference'
+    UNDEFINED_REFERENCE = "Undefined reference"
 
     def __init__(self, message, fragment=None):
         self.fragment = fragment
@@ -573,6 +632,10 @@ class GenerationException(LdGenFailure):
 
     def __str__(self):
         if self.fragment:
-            return "%s\nIn fragment '%s' defined in '%s'." % (self.message, self.fragment.name, self.fragment.path)
+            return "%s\nIn fragment '%s' defined in '%s'." % (
+                self.message,
+                self.fragment.name,
+                self.fragment.path,
+            )
         else:
             return self.message

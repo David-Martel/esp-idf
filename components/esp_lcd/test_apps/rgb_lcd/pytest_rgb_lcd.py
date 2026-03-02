@@ -7,10 +7,10 @@ from pytest_embedded import Dut
 @pytest.mark.esp32s3
 @pytest.mark.octal_psram
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'iram_safe',
-        'release',
+        "iram_safe",
+        "release",
     ],
     indirect=True,
 )
@@ -21,10 +21,10 @@ def test_rgb_lcd_esp32s3(dut: Dut) -> None:
 @pytest.mark.esp32p4
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'iram_safe',
-        'release',
+        "iram_safe",
+        "release",
     ],
     indirect=True,
 )

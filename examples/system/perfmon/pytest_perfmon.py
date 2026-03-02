@@ -10,8 +10,7 @@ from pytest_embedded import Dut
 @pytest.mark.esp32s3
 @pytest.mark.generic
 def test_perfmon(dut: Dut) -> None:
-
-    dut.expect('example: Start')
-    dut.expect('example: Start test with printing all available statistic')
-    dut.expect('example: Start test with user defined statistic')
-    dut.expect('example: The End')
+    dut.expect("example: Start")
+    dut.expect("example: Start test with printing all available statistic")
+    dut.expect("example: Start test with user defined statistic")
+    dut.expect("example: The End")

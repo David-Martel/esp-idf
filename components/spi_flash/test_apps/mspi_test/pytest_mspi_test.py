@@ -7,10 +7,10 @@ from pytest_embedded import Dut
 @pytest.mark.supported_targets
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'release',
-        'special',
+        "release",
+        "special",
     ],
     indirect=True,
 )
@@ -22,9 +22,9 @@ def test_mspi_bus(dut: Dut) -> None:
 @pytest.mark.esp32s3
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'xip_psram',
+        "xip_psram",
     ],
     indirect=True,
 )
@@ -37,9 +37,9 @@ def test_mspi_bus_xip_psram(dut: Dut) -> None:
 @pytest.mark.esp32s3
 @pytest.mark.generic
 @pytest.mark.parametrize(
-    'config',
+    "config",
     [
-        'psram',
+        "psram",
     ],
     indirect=True,
 )

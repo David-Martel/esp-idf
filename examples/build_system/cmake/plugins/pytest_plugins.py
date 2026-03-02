@@ -26,7 +26,7 @@ def test_plugins(dut: Dut) -> None:
         Calling greet function of plugin 'Nihao'...
         你好 World!
         Done with greet function of plugin 'Nihao'.
-    """).strip('\n')
+    """).strip("\n")
 
-    for line in log_text.split('\n'):
-        dut.expect_exact(line.encode('utf-8'))
+    for line in log_text.split("\n"):
+        dut.expect_exact(line.encode("utf-8"))

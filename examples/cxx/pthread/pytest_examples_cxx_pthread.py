@@ -9,12 +9,12 @@ from pytest_embedded_idf.dut import IdfDut
 def test_examples_cpp_pthread(dut: IdfDut) -> None:
     dut.expect(
         [
-            r'pthread: This thread \(with the default name\) may run on any core.'
-            r'Core id: [01], prio: 5, minimum free stack: \d+ bytes\.',
-            r'Thread [12]: Core id: [01], prio: 5, minimum free stack: \d+ bytes\.',
-            r'Thread [12]: This is the INHERITING thread with the same parameters as our parent, '
-            r'including name. Core id: [01], prio: 5, minimum free stack: \d+ bytes\.',
-            r'Thread [12]: Core id: [01], prio: 5, minimum free stack: \d+ bytes\.',
+            r"pthread: This thread \(with the default name\) may run on any core."
+            r"Core id: [01], prio: 5, minimum free stack: \d+ bytes\.",
+            r"Thread [12]: Core id: [01], prio: 5, minimum free stack: \d+ bytes\.",
+            r"Thread [12]: This is the INHERITING thread with the same parameters as our parent, "
+            r"including name. Core id: [01], prio: 5, minimum free stack: \d+ bytes\.",
+            r"Thread [12]: Core id: [01], prio: 5, minimum free stack: \d+ bytes\.",
         ],
         expect_all=True,
     )
